@@ -154,7 +154,7 @@ def make_natural_ssml(text, rate, pitch, volume, style):
         style_pitch = pitch - 1
 
     # Escape first for XML safety
-    safe = html.escape(text)
+    safe = apply_pronunciation(text)
 
     # Natural punctuation pauses
     safe = re.sub(
