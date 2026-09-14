@@ -54,7 +54,63 @@ class Req(BaseModel):
     pitch: int = Field(0, ge=-20, le=20)
     volume: int = Field(0, ge=-20, le=20)
 
+PRONUNCIATION = {
+    "AI": "एआई",
+    "Ai": "एआई",
+    "ai": "एआई",
+    "YouTube": "यूट्यूब",
+    "youtube": "यूट्यूब",
+    "Google": "गूगल",
+    "Instagram": "इंस्टाग्राम",
+    "Facebook": "फेसबुक",
+    "WhatsApp": "व्हाट्सऐप",
+    "NASA": "नासा",
+    "ISRO": "इसरो",
+    "भारत": "भारत",
+    "₹": "रुपये",
+    "5G": "फाइव जी",
+    "4G": "फोर जी",
+    "3G": "थ्री जी",
+    "100%": "सौ प्रतिशत",
+    "COVID-19": "कोविड उन्नीस",
+    "COVID": "कोविड",
+    "USB": "यूएसबी",
+    "GPS": "जीपीएस",
+    "OTP": "ओटीपी",
+    "UPI": "यूपीआई",
+    "ATM": "एटीएम",
+    "NASA": "नासा",
+    "ISRO": "इसरो",
+}
 
+
+def apply_pronunciation(text):
+    """
+    Common Hindi/English technical words
+    को natural spoken Hindi में बदलता है।
+    """
+
+    # Longer phrases first
+    replacements = sorted(
+        PRONUNCIATION.items(),
+        key=lambda item: len(item[0]),
+        reverse=True
+    )
+
+    for original, spoken in replacements:
+        pattern = r"(?<!\w)" + re.escape(original) + r"(?!\w)"
+
+        text = re.sub(
+            pattern,
+            lambda m: (
+                f'<sub alias="{html.escape(spoken)}">'
+                f'{html.escape(m.group(0))}'
+                f'</sub>'
+            ),
+            text
+        )
+
+    return text
 def clean_text(text):
     text = text.replace("\r\n", "\n")
     text = re.sub(r"[ \t]+", " ", text)
