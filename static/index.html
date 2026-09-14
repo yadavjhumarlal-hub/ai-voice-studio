@@ -1,1 +1,186 @@
-<!doctype html><html lang="hi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AI Voice Studio</title><link rel="stylesheet" href="/static/style.css"></head><body><div class="app"><header><div><h1>🎙️ AI Voice Studio</h1><p>Natural Hindi voice generator</p></div><b>Azure F0</b></header><section class="card"><label>अपना स्क्रिप्ट लिखें</label><textarea id="text" maxlength="12000" placeholder="यहाँ अपना Hindi script लिखें..."></textarea><div class="between"><span id="count">0 / 12000</span><button id="clear">Clear</button></div></section><section class="card grid"><div><label>Voice</label><select id="voice"></select></div><div><label>Style</label><select id="style"><option>neutral</option><option>serious</option><option>excited</option><option>happy</option><option>sad</option><option>soft</option></select></div></section><section class="card"><label>Speed <span id="rv">0%</span></label><input id="rate" type="range" min="-30" max="30" value="0"><label>Pitch <span id="pv">0%</span></label><input id="pitch" type="range" min="-20" max="20" value="0"><label>Volume <span id="vv">0%</span></label><input id="volume" type="range" min="-20" max="20" value="0"></section><button id="generate">🎧 Generate Voice</button><p id="status"></p><section id="out" class="card hidden"><label>आवाज़ तैयार है</label><audio id="audio" controls></audio><a id="download" download="ai-voice.mp3">⬇️ Download MP3</a></section><footer>API key browser में नहीं आती; .env में server-side रहती है।</footer></div><script src="/static/app.js"></script></body></html>
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI Voice Studio PRO V2</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+<div class="app">
+
+<header class="hero">
+  <div>
+    <span class="pro-badge">● PRO V2 • F0 SAFE MODE</span>
+    <h1>🎙️ AI Voice Studio PRO</h1>
+    <p>Professional Hindi AI Voice Generator for YouTube Shorts</p>
+  </div>
+  <div class="safe">Azure F0</div>
+</header>
+
+<section class="card">
+  <div class="section-title">📝 <b>Script</b></div>
+
+  <textarea
+    id="text"
+    maxlength="12000"
+    placeholder="अपना Hindi script यहाँ लिखें..."
+  ></textarea>
+
+  <div class="between">
+    <span id="count">0 / 12000</span>
+    <button id="clear" class="small">Clear</button>
+  </div>
+</section>
+
+<section class="card">
+  <div class="section-title">
+    🎬 <b>YouTube Voice Preset</b>
+  </div>
+
+  <select id="preset">
+    <option value="custom">⚙️ Custom</option>
+    <option value="viral_fact">🔥 Viral Fact</option>
+    <option value="news">📰 News</option>
+    <option value="mystery">😱 Mystery</option>
+    <option value="story">📖 Storytelling</option>
+    <option value="education">🎓 Education</option>
+    <option value="emotional">❤️ Emotional</option>
+    <option value="motivation">💪 Motivation</option>
+    <option value="funny">😂 Funny</option>
+  </select>
+
+  <p class="hint">
+    Preset चुनने पर voice delivery अपने-आप सेट होगी।
+  </p>
+</section>
+
+<section class="card grid">
+
+  <div>
+    <label>🎙️ Voice</label>
+    <select id="voice"></select>
+  </div>
+
+  <div>
+    <label>🎭 Style</label>
+    <select id="style"></select>
+  </div>
+
+</section>
+
+<section class="card">
+
+  <div class="section-title">
+    🤖 <b>AI Controls</b>
+  </div>
+
+  <div class="toggle-row">
+
+    <div>
+      <span>
+        <b>Auto Voice Director</b>
+        <small>Script के हिसाब से delivery</small>
+      </span>
+
+      <label class="switch">
+        <input id="auto_director" type="checkbox" checked>
+        <i></i>
+      </label>
+    </div>
+
+    <div>
+      <span>
+        <b>Auto Emotion</b>
+        <small>Sentence mood के हिसाब से</small>
+      </span>
+
+      <label class="switch">
+        <input id="auto_emotion" type="checkbox" checked>
+        <i></i>
+      </label>
+    </div>
+
+    <div>
+      <span>
+        <b>Natural Pause</b>
+        <small>Natural sentence pauses</small>
+      </span>
+
+      <label class="switch">
+        <input id="auto_pause" type="checkbox" checked>
+        <i></i>
+      </label>
+    </div>
+
+    <div>
+      <span>
+        <b>Smart Pronunciation</b>
+        <small>AI, 5G, ₹, %, YouTube आदि</small>
+      </span>
+
+      <label class="switch">
+        <input id="pronunciation" type="checkbox" checked>
+        <i></i>
+      </label>
+    </div>
+
+  </div>
+</section>
+
+<section class="card">
+
+  <div class="section-title">
+    🎚️ <b>Voice Controls</b>
+  </div>
+
+  <label>
+    Speed <span id="rv">0%</span>
+  </label>
+  <input id="rate" type="range" min="-30" max="30" value="0">
+
+  <label>
+    Pitch <span id="pv">0%</span>
+  </label>
+  <input id="pitch" type="range" min="-20" max="20" value="0">
+
+  <label>
+    Volume <span id="vv">0%</span>
+  </label>
+  <input id="volume" type="range" min="-20" max="20" value="0">
+
+</section>
+
+<button id="generate">
+  🎧 Generate Professional Voice
+</button>
+
+<p id="status"></p>
+
+<section id="out" class="card hidden">
+
+  <div class="section-title">
+    🎧 <b>Voice Preview</b>
+  </div>
+
+  <audio id="audio" controls></audio>
+
+  <a
+    id="download"
+    download="ai-voice-pro-v2.mp3"
+  >
+    ⬇️ Download MP3
+  </a>
+
+</section>
+
+<footer>
+  🔐 API key browser में नहीं आती • Server-side सुरक्षित • Azure F0 Safe Mode
+</footer>
+
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+      </html>
