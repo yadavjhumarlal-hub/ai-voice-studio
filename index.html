@@ -3,213 +3,184 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AI Voice Studio PRO</title>
+<title>AI Voice Studio PRO V2</title>
 <link rel="stylesheet" href="/static/style.css">
 </head>
 
 <body>
-
 <div class="app">
 
-<header>
+<header class="hero">
   <div>
+    <span class="pro-badge">● PRO V2 • F0 SAFE MODE</span>
     <h1>🎙️ AI Voice Studio PRO</h1>
-    <p>Natural Hindi AI Voice Generator</p>
+    <p>Professional Hindi AI Voice Generator for YouTube Shorts</p>
   </div>
-  <b>Azure F0</b>
+  <div class="safe">Azure F0</div>
 </header>
 
-<section class="hero">
-  <h2>अपनी Script को Professional Voice में बदलें</h2>
-  <p>AI Voice Director • Natural Pause • Emotion • Pronunciation</p>
+<section class="card">
+  <div class="section-title">📝 <b>Script</b></div>
+
+  <textarea
+    id="text"
+    maxlength="12000"
+    placeholder="अपना Hindi script यहाँ लिखें..."
+  ></textarea>
+
+  <div class="between">
+    <span id="count">0 / 12000</span>
+    <button id="clear" class="small">Clear</button>
+  </div>
 </section>
 
 <section class="card">
+  <div class="section-title">
+    🎬 <b>YouTube Voice Preset</b>
+  </div>
 
-<label>अपना Script लिखें</label>
+  <select id="preset">
+    <option value="custom">⚙️ Custom</option>
+    <option value="viral_fact">🔥 Viral Fact</option>
+    <option value="news">📰 News</option>
+    <option value="mystery">😱 Mystery</option>
+    <option value="story">📖 Storytelling</option>
+    <option value="education">🎓 Education</option>
+    <option value="emotional">❤️ Emotional</option>
+    <option value="motivation">💪 Motivation</option>
+    <option value="funny">😂 Funny</option>
+  </select>
 
-<textarea
- id="text"
- maxlength="12000"
- placeholder="यहाँ अपना Hindi script लिखें..."
-></textarea>
-
-<div class="between">
-  <span id="count">0 / 12000</span>
-  <button id="clear" class="small">Clear</button>
-</div>
-
+  <p class="hint">
+    Preset चुनने पर voice delivery अपने-आप सेट होगी।
+  </p>
 </section>
-
-
-<section class="card">
-
-<label>🎬 YouTube Voice Preset</label>
-
-<select id="preset">
-
-<option value="custom">Custom</option>
-<option value="viral_fact">🔥 Viral Fact</option>
-<option value="news">📰 News</option>
-<option value="mystery">😱 Mystery</option>
-<option value="story">📖 Storytelling</option>
-<option value="education">🎓 Education</option>
-<option value="emotional">❤️ Emotional</option>
-<option value="motivation">💪 Motivation</option>
-<option value="funny">😂 Funny</option>
-
-</select>
-
-</section>
-
 
 <section class="card grid">
 
-<div>
-<label>🎙️ Voice</label>
-<select id="voice"></select>
-</div>
+  <div>
+    <label>🎙️ Voice</label>
+    <select id="voice"></select>
+  </div>
 
-<div>
-<label>🎭 Style</label>
-
-<select id="style">
-
-<option value="neutral">Neutral</option>
-<option value="serious">Serious</option>
-<option value="excited">Excited</option>
-<option value="happy">Happy</option>
-<option value="sad">Sad</option>
-<option value="soft">Soft</option>
-
-</select>
-
-</div>
+  <div>
+    <label>🎭 Style</label>
+    <select id="style"></select>
+  </div>
 
 </section>
-
 
 <section class="card">
 
-<div class="toggleRow">
+  <div class="section-title">
+    🤖 <b>AI Controls</b>
+  </div>
 
-<div>
-<strong>✨ Auto Voice Director</strong>
-<p>Script के हिसाब से delivery optimize करें</p>
-</div>
+  <div class="toggle-row">
 
-<label class="switch">
-<input type="checkbox" id="autoDirector" checked>
-<span></span>
-</label>
+    <div>
+      <span>
+        <b>Auto Voice Director</b>
+        <small>Script के हिसाब से delivery</small>
+      </span>
 
-</div>
+      <label class="switch">
+        <input id="auto_director" type="checkbox" checked>
+        <i></i>
+      </label>
+    </div>
 
+    <div>
+      <span>
+        <b>Auto Emotion</b>
+        <small>Sentence mood के हिसाब से</small>
+      </span>
 
-<div class="toggleRow">
+      <label class="switch">
+        <input id="auto_emotion" type="checkbox" checked>
+        <i></i>
+      </label>
+    </div>
 
-<div>
-<strong>🎭 Auto Emotion</strong>
-<p>Text के mood के अनुसार style चुनें</p>
-</div>
+    <div>
+      <span>
+        <b>Natural Pause</b>
+        <small>Natural sentence pauses</small>
+      </span>
 
-<label class="switch">
-<input type="checkbox" id="autoEmotion" checked>
-<span></span>
-</label>
+      <label class="switch">
+        <input id="auto_pause" type="checkbox" checked>
+        <i></i>
+      </label>
+    </div>
 
-</div>
+    <div>
+      <span>
+        <b>Smart Pronunciation</b>
+        <small>AI, 5G, ₹, %, YouTube आदि</small>
+      </span>
 
+      <label class="switch">
+        <input id="pronunciation" type="checkbox" checked>
+        <i></i>
+      </label>
+    </div>
 
-<div class="toggleRow">
-
-<div>
-<strong>⏸️ Natural Pause</strong>
-<p>Sentence और punctuation के अनुसार pause</p>
-</div>
-
-<label class="switch">
-<input type="checkbox" id="autoPause" checked>
-<span></span>
-</label>
-
-</div>
-
-
-<div class="toggleRow">
-
-<div>
-<strong>🗣️ Smart Pronunciation</strong>
-<p>AI, NASA, ISRO, 5G आदि की pronunciation</p>
-</div>
-
-<label class="switch">
-<input type="checkbox" id="pronunciation" checked>
-<span></span>
-</label>
-
-</div>
-
+  </div>
 </section>
-
 
 <section class="card">
 
-<label>
-Speed <span id="rv">0%</span>
-</label>
+  <div class="section-title">
+    🎚️ <b>Voice Controls</b>
+  </div>
 
-<input id="rate" type="range" min="-30" max="30" value="0">
+  <label>
+    Speed <span id="rv">0%</span>
+  </label>
+  <input id="rate" type="range" min="-30" max="30" value="0">
 
+  <label>
+    Pitch <span id="pv">0%</span>
+  </label>
+  <input id="pitch" type="range" min="-20" max="20" value="0">
 
-<label>
-Pitch <span id="pv">0%</span>
-</label>
-
-<input id="pitch" type="range" min="-20" max="20" value="0">
-
-
-<label>
-Volume <span id="vv">0%</span>
-</label>
-
-<input id="volume" type="range" min="-20" max="20" value="0">
+  <label>
+    Volume <span id="vv">0%</span>
+  </label>
+  <input id="volume" type="range" min="-20" max="20" value="0">
 
 </section>
-
 
 <button id="generate">
-🎧 Generate Professional Voice
+  🎧 Generate Professional Voice
 </button>
 
 <p id="status"></p>
 
-
 <section id="out" class="card hidden">
 
-<label>✅ Professional Voice तैयार है</label>
+  <div class="section-title">
+    🎧 <b>Voice Preview</b>
+  </div>
 
-<audio id="audio" controls></audio>
+  <audio id="audio" controls></audio>
 
-<a
- id="download"
- download="ai-voice-studio-pro.mp3"
->
-⬇️ Download MP3
-</a>
+  <a
+    id="download"
+    download="ai-voice-pro-v2.mp3"
+  >
+    ⬇️ Download MP3
+  </a>
 
 </section>
 
-
 <footer>
-🔒 Azure API key browser में नहीं आती • Server-side सुरक्षित
-<br>
-AI Voice Studio PRO • F0 Safe Mode
+  🔐 API key browser में नहीं आती • Server-side सुरक्षित • Azure F0 Safe Mode
 </footer>
 
 </div>
 
 <script src="/static/app.js"></script>
-
 </body>
-</html>
+    </html>
