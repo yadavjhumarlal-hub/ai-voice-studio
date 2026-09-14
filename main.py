@@ -1,23 +1,27 @@
 import os
+import re
 import html
 import base64
-import re
 
+import requests
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-import requests
-from dotenv import load_dotenv
-
-
 load_dotenv()
 
+# =========================================================
+# AZURE CONFIG
+# =========================================================
 
 KEY = os.getenv("AZURE_SPEECH_KEY", "").strip()
 REGION = os.getenv("AZURE_SPEECH_REGION", "centralindia").strip()
 
+# =========================================================
+# HINDI VOICES
+# =========================================================
 
 VOICES = {
     "arjun": ("hi-IN-ArjunNeural", "Arjun — Male"),
@@ -28,9 +32,8 @@ VOICES = {
     "swara": ("hi-IN-SwaraNeural", "Swara — Female"),
     "ananya": ("hi-IN-AnanyaNeural", "Ananya — Female"),
     "aarti": ("hi-IN-AartiNeural", "Aarti — Female"),
-    "kunal": ("hi-IN-KunalNeural", "Kunal — Male")
+    "kunal": ("hi-IN-KunalNeural", "Kunal — Male"),
 }
-
 
 STYLES = [
     "neutral",
@@ -38,102 +41,123 @@ STYLES = [
     "excited",
     "happy",
     "sad",
-    "soft"
+    "soft",
 ]
 
+# =========================================================
+# YOUTUBE PRESETS
+# =========================================================
 
 PRESETS = {
     "custom": {
         "style": "neutral",
         "rate": 0,
-        "pitch": 0
+        "pitch": 0,
     },
 
     "viral_fact": {
         "style": "excited",
         "rate": 5,
-        "pitch": 1
+        "pitch": 1,
     },
 
     "news": {
         "style": "serious",
         "rate": -2,
-        "pitch": -1
+        "pitch": -1,
     },
 
     "mystery": {
         "style": "serious",
         "rate": -7,
-        "pitch": -2
+        "pitch": -2,
     },
 
     "story": {
         "style": "soft",
         "rate": -3,
-        "pitch": 0
+        "pitch": 0,
     },
 
     "education": {
         "style": "neutral",
         "rate": -1,
-        "pitch": 0
+        "pitch": 0,
     },
 
     "emotional": {
         "style": "sad",
         "rate": -7,
-        "pitch": -2
+        "pitch": -2,
     },
 
     "motivation": {
         "style": "excited",
         "rate": 3,
-        "pitch": 1
+        "pitch": 1,
     },
 
     "funny": {
         "style": "happy",
         "rate": 3,
-        "pitch": 1
-    }
+        "pitch": 1,
+    },
 }
 
+# =========================================================
+# SMART PRONUNCIATION
+# =========================================================
 
 PRONUNCIATION = {
     "YouTube": "यूट्यूब",
-    "youtube": "यूट्यूब",
-    "Google": "गूगल",
-    "Instagram": "इंस्टाग्राम",
-    "Facebook": "फेसबुक",
-    "WhatsApp": "व्हाट्सऐप",
+    "Youtube": "यूट्यूब",
     "NASA": "नासा",
+    "Nasa": "नासा",
     "ISRO": "इसरो",
+    "Isro": "इसरो",
+
     "AI": "एआई",
     "Ai": "एआई",
     "ai": "एआई",
+
     "5G": "फाइव जी",
     "4G": "फोर जी",
     "3G": "थ्री जी",
+
     "USB": "यूएसबी",
     "GPS": "जीपीएस",
     "OTP": "ओटीपी",
     "UPI": "यूपीआई",
     "ATM": "एटीएम",
-    "COVID-19": "कोविड उन्नीस",
+    "CPU": "सीपीयू",
+    "PDF": "पीडीएफ",
+    "URL": "यूआरएल",
+
     "COVID": "कोविड",
-    
+    "Google": "गूगल",
+    "WhatsApp": "व्हाट्सऐप",
+    "Instagram": "इंस्टाग्राम",
+    "Facebook": "फेसबुक",
 }
 
+# =========================================================
+# APP
+# =========================================================
 
-app = FastAPI(title="AI Voice Studio PRO")
-
+app = FastAPI(
+    title="AI Voice Studio PRO V2.5",
+    version="2.5",
+)
 
 app.mount(
     "/static",
     StaticFiles(directory="static"),
-    name="static"
+    name="static",
 )
 
+# =========================================================
+# REQUEST MODEL
+# =========================================================
 
 class Req(BaseModel):
 
@@ -175,302 +199,20 @@ class Req(BaseModel):
     pronunciation: bool = True
 
 
-def clean_text(text):
-
-    text = text.replace(
-        "\r\n",
-        "\n"
-    )
-
-    text = re.sub(
-        r"[ \t]+",
-        " ",
-        text
-    )
-
-    text = re.sub(
-        r"\n{3,}",
-        "\n\n",
-        text
-    )
-
-    return text.strip()
-
-
-def detect_emotion(text, current_style):
-
-    lower = text.lower()
-
-    excited_words = [
-        "चौंकाने",
-        "अविश्वसनीय",
-        "हैरान",
-        "क्या आप जानते",
-        "कमाल",
-        "शानदार",
-        "जबरदस्त",
-        "रहस्य"
-    ]
-
-    sad_words = [
-        "दुख",
-        "दर्द",
-        "अकेला",
-        "अकेली",
-        "मौत",
-        "खो दिया",
-        "रोना",
-        "आंसू"
-    ]
-
-    serious_words = [
-        "सावधान",
-        "महत्वपूर्ण",
-        "खतरा",
-        "चेतावनी",
-        "जरूरी",
-        "ध्यान दें"
-    ]
-
-    happy_words = [
-        "खुशी",
-        "खुश",
-        "मुस्कान",
-        "शुभकामना",
-        "बधाई",
-        "जीत"
-    ]
-
-    if any(word in lower for word in excited_words):
-        return "excited"
-
-    if any(word in lower for word in sad_words):
-        return "sad"
-
-    if any(word in lower for word in serious_words):
-        return "serious"
-
-    if any(word in lower for word in happy_words):
-        return "happy"
-
-    return current_style
-
-
-def apply_pronunciation(text):
-
-    safe = html.escape(text)
-
-    # Currency
-    safe = re.sub(
-        r"₹\s*([0-9][0-9,]*)",
-        lambda m:
-        '<sub alias="' +
-        html.escape(
-            m.group(1).replace(",", "")
-            + " रुपये"
-        ) +
-        '">' +
-        html.escape(m.group(0)) +
-        '</sub>',
-        safe
-    )
-
-    # Percent
-    safe = re.sub(
-        r"([0-9]+)%",
-        lambda m:
-        '<sub alias="' +
-        html.escape(
-            m.group(1) + " प्रतिशत"
-        ) +
-        '">' +
-        html.escape(m.group(0)) +
-        '</sub>',
-        safe
-    )
-
-    replacements = sorted(
-        PRONUNCIATION.items(),
-        key=lambda item: len(item[0]),
-        reverse=True
-    )
-
-    for original, spoken in replacements:
-
-        pattern = (
-            r"(?<![\w])"
-            + re.escape(
-                html.escape(original)
-            )
-            + r"(?![\w])"
-        )
-
-        safe = re.sub(
-            pattern,
-            lambda m:
-            '<sub alias="' +
-            html.escape(spoken) +
-            '">' +
-            m.group(0) +
-            '</sub>',
-            safe
-        )
-
-    return safe
-
-
-def apply_pauses(text):
-
-    text = re.sub(
-        r",",
-        ',<break time="180ms"/>',
-        text
-    )
-
-    text = re.sub(
-        r";",
-        ';<break time="220ms"/>',
-        text
-    )
-
-    text = re.sub(
-        r":",
-        ':<break time="180ms"/>',
-        text
-    )
-
-    text = re.sub(
-        r"([!?])",
-        r'\1<break time="380ms"/>',
-        text
-    )
-
-    text = re.sub(
-        r"([।])",
-        r'\1<break time="320ms"/>',
-        text
-    )
-
-    text = re.sub(
-        r"\.",
-        '.<break time="300ms"/>',
-        text
-    )
-
-    text = re.sub(
-        r"\n+",
-        '<break time="450ms"/>',
-        text
-    )
-
-    return text
-
-
-def build_ssml(
-    text,
-    voice_name,
-    style,
-    rate,
-    pitch,
-    volume,
-    auto_director,
-    auto_emotion,
-    auto_pause,
-    pronunciation
-):
-
-    text = clean_text(text)
-
-    if auto_emotion:
-        style = detect_emotion(
-            text,
-            style
-        )
-
-    if auto_director:
-
-        if style == "soft":
-            rate -= 5
-            pitch -= 1
-
-        elif style == "excited":
-            rate += 5
-            pitch += 1
-
-        elif style == "happy":
-            rate += 3
-            pitch += 1
-
-        elif style == "sad":
-            rate -= 5
-            pitch -= 2
-
-        elif style == "serious":
-            rate -= 2
-            pitch -= 1
-
-
-    rate = max(
-        -30,
-        min(30, rate)
-    )
-
-    pitch = max(
-        -20,
-        min(20, pitch)
-    )
-
-    volume = max(
-        -20,
-        min(20, volume)
-    )
-
-
-    if pronunciation:
-
-        body = apply_pronunciation(
-            text
-        )
-
-    else:
-
-        body = html.escape(
-            text
-        )
-
-
-    if auto_pause:
-
-        body = apply_pauses(
-            body
-        )
-
-
-    ssml = (
-        '<speak version="1.0" '
-        'xmlns="http://www.w3.org/2001/10/synthesis" '
-        'xml:lang="hi-IN">'
-        f'<voice name="{voice_name}">'
-        f'<prosody '
-        f'rate="{rate}%" '
-        f'pitch="{pitch}%" '
-        f'volume="{volume}%">'
-        f'{body}'
-        '</prosody>'
-        '</voice>'
-        '</speak>'
-    )
-
-    return ssml
-
+# =========================================================
+# HOME
+# =========================================================
 
 @app.get("/")
 def home():
-
     return FileResponse(
         "static/index.html"
     )
 
+
+# =========================================================
+# CONFIG
+# =========================================================
 
 @app.get("/api/config")
 def config():
@@ -479,16 +221,376 @@ def config():
         "voices": {
             key: {
                 "name": value[0],
-                "label": value[1]
+                "label": value[1],
             }
             for key, value in VOICES.items()
         },
 
         "styles": STYLES,
 
-        "presets": PRESETS
+        "presets": PRESETS,
+
+        "version": "PRO V2.5",
     }
 
+
+# =========================================================
+# AUTO EMOTION DETECTION
+# =========================================================
+
+def detect_emotion(text):
+
+    lower = text.lower()
+
+    # Excited
+    if (
+        "!" in text
+        or any(
+            word in lower
+            for word in [
+                "वाह",
+                "कमाल",
+                "जबरदस्त",
+                "शानदार",
+                "अविश्वसनीय",
+                "सच में",
+                "बड़ा खुलासा",
+            ]
+        )
+    ):
+        return "excited"
+
+    # Mystery / serious
+    if (
+        "?" in text
+        or any(
+            word in lower
+            for word in [
+                "रहस्य",
+                "हैरान",
+                "चौंकाने",
+                "चौंकाने वाला",
+                "अजीब",
+                "लेकिन क्या",
+                "क्या आप जानते",
+            ]
+        )
+    ):
+        return "serious"
+
+    # Sad
+    if any(
+        word in lower
+        for word in [
+            "दुख",
+            "दर्द",
+            "आंसू",
+            "अकेला",
+            "अकेली",
+            "दुखद",
+            "रोना",
+        ]
+    ):
+        return "sad"
+
+    # Happy
+    if any(
+        word in lower
+        for word in [
+            "खुशी",
+            "मजेदार",
+            "हंसी",
+            "मजाक",
+            "खुश",
+        ]
+    ):
+        return "happy"
+
+    return None
+
+
+# =========================================================
+# SMART PRONUNCIATION
+# =========================================================
+
+def apply_pronunciation(text):
+
+    escaped = html.escape(
+        text,
+        quote=True
+    )
+
+    for key in sorted(
+        PRONUNCIATION,
+        key=len,
+        reverse=True
+    ):
+
+        alias = html.escape(
+            PRONUNCIATION[key],
+            quote=True
+        )
+
+        escaped = re.sub(
+            re.escape(key),
+            lambda match, a=alias:
+                f'<sub alias="{a}">'
+                f'{html.escape(match.group(0))}'
+                f'</sub>',
+            escaped,
+        )
+
+    # Currency
+    escaped = re.sub(
+        r'₹\s*([0-9][0-9,]*)',
+
+        lambda match:
+            f'<sub alias="'
+            f'{match.group(1).replace(",", " ")} '
+            f'रुपये">'
+            f'₹{match.group(1)}'
+            f'</sub>',
+
+        escaped,
+    )
+
+    # Percentage
+    escaped = re.sub(
+        r'\b([0-9][0-9,]*)%',
+
+        lambda match:
+            f'<sub alias="'
+            f'{match.group(1).replace(",", " ")} '
+            f'प्रतिशत">'
+            f'{match.group(1)}%'
+            f'</sub>',
+
+        escaped,
+    )
+
+    return escaped
+
+
+# =========================================================
+# NATURAL PAUSES
+# =========================================================
+
+def apply_pauses(text):
+
+    text = re.sub(
+        r'([।!?])\s+',
+        r'\1<break time="420ms"/>',
+        text,
+    )
+
+    text = re.sub(
+        r'([,;:])\s+',
+        r'\1<break time="180ms"/>',
+        text,
+    )
+
+    text = re.sub(
+        r'\n{2,}',
+        '<break time="650ms"/>',
+        text,
+    )
+
+    return text
+
+
+# =========================================================
+# SAFE TEXT → SSML
+# =========================================================
+
+def prepare_body(text, use_pause, use_pronunciation):
+
+    if not use_pause:
+
+        if use_pronunciation:
+            return apply_pronunciation(text)
+
+        return html.escape(
+            text,
+            quote=True
+        )
+
+    # Split first so SSML break tags are never escaped.
+    parts = re.split(
+        r'(<break time="(?:180|420|650)ms"/>)',
+        apply_pauses(text),
+    )
+
+    output = []
+
+    for part in parts:
+
+        if part.startswith(
+            "<break "
+        ):
+            output.append(part)
+
+        else:
+
+            if use_pronunciation:
+                output.append(
+                    apply_pronunciation(part)
+                )
+            else:
+                output.append(
+                    html.escape(
+                        part,
+                        quote=True
+                    )
+                )
+
+    return "".join(output)
+
+
+# =========================================================
+# BUILD SSML
+# =========================================================
+
+def build_ssml(x):
+
+    rate = x.rate
+
+    pitch = x.pitch
+
+    style = x.style
+
+    # -----------------------------------------------------
+    # PRESET
+    # -----------------------------------------------------
+
+    if x.preset != "custom":
+
+        preset = PRESETS[x.preset]
+
+        style = preset["style"]
+
+        # Frontend normally sends preset values.
+        # These fallbacks make preset work even if frontend
+        # values are missing.
+        if x.rate == 0:
+            rate = preset["rate"]
+
+        if x.pitch == 0:
+            pitch = preset["pitch"]
+
+    # -----------------------------------------------------
+    # AUTO EMOTION
+    # -----------------------------------------------------
+
+    if x.auto_emotion:
+
+        detected = detect_emotion(
+            x.text
+        )
+
+        if detected:
+
+            style = detected
+
+            if detected == "excited":
+
+                rate = min(
+                    30,
+                    rate + 2
+                )
+
+                pitch = min(
+                    20,
+                    pitch + 1
+                )
+
+            elif detected == "serious":
+
+                rate = max(
+                    -30,
+                    rate - 2
+                )
+
+            elif detected == "sad":
+
+                rate = max(
+                    -30,
+                    rate - 3
+                )
+
+                pitch = max(
+                    -20,
+                    pitch - 1
+                )
+
+            elif detected == "happy":
+
+                rate = min(
+                    30,
+                    rate + 2
+                )
+
+    # -----------------------------------------------------
+    # AUTO VOICE DIRECTOR
+    # -----------------------------------------------------
+
+    if x.auto_director:
+
+        if style == "excited":
+
+            rate = min(
+                30,
+                rate + 2
+            )
+
+        elif style == "soft":
+
+            rate = max(
+                -30,
+                rate - 2
+            )
+
+        elif style == "sad":
+
+            rate = max(
+                -30,
+                rate - 2
+            )
+
+    body = prepare_body(
+        x.text,
+        x.auto_pause,
+        x.pronunciation,
+    )
+
+    # -----------------------------------------------------
+    # AZURE SSML
+    # -----------------------------------------------------
+
+    return (
+        '<speak version="1.0" '
+        'xmlns="http://www.w3.org/2001/10/synthesis" '
+        'xml:lang="hi-IN">'
+
+        f'<voice name="{VOICES[x.voice][0]}">'
+
+        f'<prosody '
+        f'rate="{rate}%" '
+        f'pitch="{pitch}%" '
+        f'volume="{x.volume}%">'
+
+        f'{body}'
+
+        '</prosody>'
+
+        '</voice>'
+
+        '</speak>'
+    )
+
+
+# =========================================================
+# TTS API
+# =========================================================
 
 @app.post("/api/tts")
 def tts(x: Req):
@@ -496,76 +598,40 @@ def tts(x: Req):
     if not KEY:
 
         raise HTTPException(
-            500,
-            "Azure key .env में सेट नहीं है।"
+            status_code=500,
+            detail=(
+                "Azure key .env में सेट नहीं है।"
+            ),
         )
-
 
     if x.voice not in VOICES:
 
         raise HTTPException(
-            400,
-            "Invalid voice"
+            status_code=400,
+            detail="Invalid voice",
         )
-
 
     if x.style not in STYLES:
 
         raise HTTPException(
-            400,
-            "Invalid style"
+            status_code=400,
+            detail="Invalid style",
         )
 
+    if x.preset not in PRESETS:
 
-    # Preset values
-    rate = x.rate
-    pitch = x.pitch
-    style = x.style
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid preset",
+        )
 
-    if x.preset in PRESETS and x.preset != "custom":
-
-        preset = PRESETS[x.preset]
-
-        style = preset["style"]
-
-        # Only use preset defaults
-        # when user has not manually changed
-        # the controls significantly.
-        rate = x.rate
-        pitch = x.pitch
-
-
-    voice_name = VOICES[x.voice][0]
-
-
-    ssml = build_ssml(
-        text=x.text,
-
-        voice_name=voice_name,
-
-        style=style,
-
-        rate=rate,
-
-        pitch=pitch,
-
-        volume=x.volume,
-
-        auto_director=x.auto_director,
-
-        auto_emotion=x.auto_emotion,
-
-        auto_pause=x.auto_pause,
-
-        pronunciation=x.pronunciation
-    )
-
+    ssml = build_ssml(x)
 
     url = (
-        f"https://{REGION}.tts.speech.microsoft.com/"
+        f"https://{REGION}"
+        ".tts.speech.microsoft.com/"
         "cognitiveservices/v1"
     )
-
 
     headers = {
 
@@ -579,9 +645,8 @@ def tts(x: Req):
             "audio-24khz-160kbitrate-mono-mp3",
 
         "User-Agent":
-            "AI-Voice-Studio-PRO"
+            "AI-Voice-Studio-PRO-V2",
     }
-
 
     try:
 
@@ -589,26 +654,28 @@ def tts(x: Req):
             url,
             headers=headers,
             data=ssml.encode("utf-8"),
-            timeout=60
+            timeout=60,
         )
 
-    except requests.RequestException as e:
+    except requests.RequestException as error:
 
         raise HTTPException(
-            502,
-            "Azure connection error: "
-            + str(e)
+            status_code=502,
+            detail=(
+                "Azure connection error: "
+                + str(error)
+            ),
         )
-
 
     if response.status_code != 200:
 
         raise HTTPException(
-            response.status_code,
-            "Azure TTS error: "
-            + response.text[:800]
+            status_code=response.status_code,
+            detail=(
+                "Azure TTS error: "
+                + response.text[:800]
+            ),
         )
-
 
     return JSONResponse({
 
@@ -618,6 +685,8 @@ def tts(x: Req):
             ).decode(),
 
         "mime":
-            "audio/mpeg"
+            "audio/mpeg",
 
+        "version":
+            "PRO V2.5",
     })
