@@ -173,21 +173,6 @@
 
       <!-- RECENT -->
 
-      <section class="card">
-
-        <div class="section-title">
-          🕘 <b>Recent Activity</b>
-        </div>
-
-        <div id="recent_history">
-
-          <p class="hint">
-            अभी कोई voice history नहीं है।
-          </p>
-
-        </div>
-
-      </section>
 
     </section>
 
@@ -288,13 +273,25 @@
 
         <select id="voice"></select>
 
-        <div id="voice_library" class="voice-list"></div>
+       <div class="voice-select-row">
 
-        <audio
-          id="preview_audio"
-          class="hidden"
-          controls
-        ></audio>
+  <select id="voice"></select>
+
+  <button
+    id="selected_voice_preview"
+    class="voice-select-preview"
+    type="button"
+  >
+    ▶
+  </button>
+
+</div>
+
+<audio
+  id="preview_audio"
+  class="hidden"
+  controls
+></audio>
 
       </div>
 
