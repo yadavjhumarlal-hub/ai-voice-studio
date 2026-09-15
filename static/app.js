@@ -1,63 +1,66 @@
 const $ = id => document.getElementById(id);
 
+
 /* =========================
-   V3 PRESETS
+   PRESETS
 ========================= */
 
 const PRESETS = {
-  custom: {
-    style: "neutral",
-    rate: 0,
-    pitch: 0
+
+  custom:{
+    style:"neutral",
+    rate:0,
+    pitch:0
   },
 
-  viral_fact: {
-    style: "excited",
-    rate: 5,
-    pitch: 1
+  viral_fact:{
+    style:"excited",
+    rate:5,
+    pitch:1
   },
 
-  news: {
-    style: "serious",
-    rate: -2,
-    pitch: -1
+  news:{
+    style:"serious",
+    rate:-2,
+    pitch:-1
   },
 
-  mystery: {
-    style: "serious",
-    rate: -7,
-    pitch: -2
+  mystery:{
+    style:"serious",
+    rate:-7,
+    pitch:-2
   },
 
-  story: {
-    style: "soft",
-    rate: -3,
-    pitch: 0
+  story:{
+    style:"soft",
+    rate:-3,
+    pitch:0
   },
 
-  education: {
-    style: "neutral",
-    rate: -1,
-    pitch: 0
+  education:{
+    style:"neutral",
+    rate:-1,
+    pitch:0
   },
 
-  emotional: {
-    style: "sad",
-    rate: -7,
-    pitch: -2
+  emotional:{
+    style:"sad",
+    rate:-7,
+    pitch:-2
   },
 
-  motivation: {
-    style: "excited",
-    rate: 3,
-    pitch: 1
+  motivation:{
+    style:"excited",
+    rate:3,
+    pitch:1
   },
 
-  funny: {
-    style: "happy",
-    rate: 3,
-    pitch: 1
+  funny:{
+    style:"happy",
+    rate:3,
+    pitch:1
   }
+
 };
 
 
@@ -68,7 +71,6 @@ const PRESETS = {
 let rateValue = 0;
 let pitchValue = 0;
 let volumeValue = 0;
-let boostValue = 0;
 
 let currentAudioUrl = null;
 
@@ -77,14 +79,15 @@ let currentAudioUrl = null;
    STATUS
 ========================= */
 
-function setStatus(message, className = "") {
+function setStatus(message,className=""){
 
-  const el = $("status");
+  const status = $("status");
 
-  if (!el) return;
+  if(!status) return;
 
-  el.textContent = message;
-  el.className = className;
+  status.textContent = message;
+  status.className = className;
+
 }
 
 
@@ -92,73 +95,164 @@ function setStatus(message, className = "") {
    SIDEBAR
 ========================= */
 
-function openSidebar() {
+function openSidebar(){
 
-  const sidebar = document.querySelector(".sidebar");
-  const overlay = document.querySelector(".overlay");
+  $("sidebar")?.classList.add("open");
+  $("overlay")?.classList.add("show");
 
-  if (sidebar) {
-    sidebar.classList.add("open");
-  }
-
-  if (overlay) {
-    overlay.classList.add("show");
-  }
 }
 
 
-function closeSidebar() {
+function closeSidebar(){
 
-  const sidebar = document.querySelector(".sidebar");
-  const overlay = document.querySelector(".overlay");
+  $("sidebar")?.classList.remove("open");
+  $("overlay")?.classList.remove("show");
 
-  if (sidebar) {
-    sidebar.classList.remove("open");
-  }
-
-  if (overlay) {
-    overlay.classList.remove("show");
-  }
 }
 
 
-const menuBtn = document.querySelector(".menu-btn");
-
-if (menuBtn) {
-  menuBtn.onclick = openSidebar;
-}
-
-
-const closeBtn = document.querySelector(".close-sidebar");
-
-if (closeBtn) {
-  closeBtn.onclick = closeSidebar;
-}
+$("menu_btn")?.addEventListener(
+  "click",
+  openSidebar
+);
 
 
-const overlay = document.querySelector(".overlay");
+$("close_sidebar")?.addEventListener(
+  "click",
+  closeSidebar
+);
 
-if (overlay) {
-  overlay.onclick = closeSidebar;
-}
+
+$("overlay")?.addEventListener(
+  "click",
+  closeSidebar
+);
 
 
 /* =========================
-   NAVIGATION
+   SECTION SWITCHING
 ========================= */
 
-document.querySelectorAll(".nav button").forEach(button => {
+function showSection(section){
 
-  button.addEventListener("click", () => {
+  const sections = [
+    "dashboard_section",
+    "voice_section",
+    "script_section",
+    "history_section",
+    "settings_section"
+  ];
 
-    document.querySelectorAll(".nav button")
-      .forEach(btn => btn.classList.remove("active"));
+  sections.forEach(id=>{
 
-    button.classList.add("active");
-
-    closeSidebar();
+    $(id)?.classList.add("hidden");
 
   });
+
+
+  if(section==="dashboard"){
+    $("dashboard_section")?.classList.remove("hidden");
+  }
+
+  if(section==="voice"){
+    $("voice_section")?.classList.remove("hidden");
+  }
+
+  if(section==="script"){
+    $("script_section")?.classList.remove("hidden");
+  }
+
+  if(section==="history"){
+    $("history_section")?.classList.remove("hidden");
+    renderHistory();
+  }
+
+  if(section==="settings"){
+    $("settings_section")?.classList.remove("hidden");
+  }
+
+
+  document.querySelectorAll(
+    ".nav button"
+  ).forEach(button=>{
+
+    button.classList.toggle(
+      "active",
+      button.dataset.section===section
+    );
+
+  });
+
+}
+
+
+document.querySelectorAll(
+  ".nav button[data-section]"
+).forEach(button=>{
+
+  button.addEventListener(
+    "click",
+    ()=>{
+
+      showSection(
+        button.dataset.section
+      );
+
+      closeSidebar();
+
+    }
+  );
+
+});
+
+
+$("history_nav")?.addEventListener(
+  "click",
+  ()=>{
+
+    showSection("history");
+    closeSidebar();
+
+  }
+);
+
+
+$("usage_nav")?.addEventListener(
+  "click",
+  ()=>{
+
+    openUsage();
+    closeSidebar();
+
+  }
+);
+
+
+$("settings_nav")?.addEventListener(
+  "click",
+  ()=>{
+
+    showSection("settings");
+    closeSidebar();
+
+  }
+);
+
+
+document.querySelectorAll(
+  "[data-open]"
+).forEach(card=>{
+
+  card.addEventListener(
+    "click",
+    ()=>{
+
+      showSection(
+        card.dataset.open
+      );
+
+    }
+  );
 
 });
 
@@ -167,359 +261,326 @@ document.querySelectorAll(".nav button").forEach(button => {
    SCRIPT COUNTER
 ========================= */
 
-const textBox = $("text");
+$("text")?.addEventListener(
+  "input",
+  ()=>{
 
-if (textBox) {
+    $("count").textContent =
+      $("text").value.length +
+      " / 12000";
 
-  textBox.addEventListener("input", () => {
-
-    const count = $("count");
-
-    if (count) {
-      count.textContent =
-        textBox.value.length + " / 12000";
-    }
-
-  });
-
-}
+  }
+);
 
 
 /* =========================
-   CLEAR SCRIPT
+   CLEAR
 ========================= */
 
-const clearBtn = $("clear");
+$("clear")?.addEventListener(
+  "click",
+  ()=>{
 
-if (clearBtn) {
+    $("text").value = "";
 
-  clearBtn.onclick = () => {
+    $("count").textContent =
+      "0 / 12000";
 
-    if (textBox) {
-      textBox.value = "";
-    }
-
-    const count = $("count");
-
-    if (count) {
-      count.textContent = "0 / 12000";
-    }
-
-    const out = $("out");
-
-    if (out) {
-      out.classList.add("hidden");
-    }
+    $("out")?.classList.add(
+      "hidden"
+    );
 
     setStatus("");
 
-  };
-
-}
+  }
+);
 
 
 /* =========================
    PRESET
 ========================= */
 
-function applyPreset() {
+function applyPreset(){
 
-  const presetElement = $("preset");
+  const presetName =
+    $("preset")?.value || "custom";
 
-  if (!presetElement) return;
+  const preset =
+    PRESETS[presetName];
 
-  const preset = PRESETS[presetElement.value];
-
-  if (!preset) return;
+  if(!preset) return;
 
 
-  const style = $("style");
-
-  if (style) {
-    style.value = preset.style;
+  if($("style")){
+    $("style").value =
+      preset.style;
   }
 
 
-  rateValue = preset.rate;
-  pitchValue = preset.pitch;
+  rateValue =
+    preset.rate;
+
+  pitchValue =
+    preset.pitch;
 
 
-  updateVoiceControls();
-
-}
-
-
-const presetElement = $("preset");
-
-if (presetElement) {
-
-  presetElement.addEventListener(
-    "change",
-    applyPreset
-  );
+  updateControls();
 
 }
+
+
+$("preset")?.addEventListener(
+  "change",
+  applyPreset
+);
 
 
 /* =========================
    VALUE CONTROLS
 ========================= */
 
-function updateVoiceControls() {
+function updateControls(){
 
-  const rateDisplay = $("rate_value");
-  const pitchDisplay = $("pitch_value");
-  const volumeDisplay = $("volume_value");
+  if($("rate_value")){
 
-  if (rateDisplay) {
-    rateDisplay.textContent =
-      (rateValue > 0 ? "+" : "") +
+    $("rate_value").textContent =
+      (rateValue>0 ? "+" : "") +
       rateValue +
       "%";
+
   }
 
-  if (pitchDisplay) {
-    pitchDisplay.textContent =
-      (pitchValue > 0 ? "+" : "") +
+
+  if($("pitch_value")){
+
+    $("pitch_value").textContent =
+      (pitchValue>0 ? "+" : "") +
       pitchValue +
       "%";
+
   }
 
-  if (volumeDisplay) {
-    volumeDisplay.textContent =
-      (volumeValue > 0 ? "+" : "") +
+
+  if($("volume_value")){
+
+    $("volume_value").textContent =
+      (volumeValue>0 ? "+" : "") +
       volumeValue +
       "%";
+
   }
 
 }
 
 
-/* =========================
-   RATE
-========================= */
+/* SPEED */
 
-const rateMinus = $("rate_minus");
-const ratePlus = $("rate_plus");
+$("rate_minus")?.addEventListener(
+  "click",
+  ()=>{
 
-if (rateMinus) {
+    rateValue =
+      Math.max(
+        -30,
+        rateValue-1
+      );
 
-  rateMinus.onclick = () => {
+    updateControls();
 
-    rateValue = Math.max(
-      -30,
-      rateValue - 1
-    );
-
-    updateVoiceControls();
-
-  };
-
-}
+  }
+);
 
 
-if (ratePlus) {
+$("rate_plus")?.addEventListener(
+  "click",
+  ()=>{
 
-  ratePlus.onclick = () => {
+    rateValue =
+      Math.min(
+        30,
+        rateValue+1
+      );
 
-    rateValue = Math.min(
-      30,
-      rateValue + 1
-    );
+    updateControls();
 
-    updateVoiceControls();
-
-  };
-
-}
-
-
-/* =========================
-   PITCH
-========================= */
-
-const pitchMinus = $("pitch_minus");
-const pitchPlus = $("pitch_plus");
-
-if (pitchMinus) {
-
-  pitchMinus.onclick = () => {
-
-    pitchValue = Math.max(
-      -20,
-      pitchValue - 1
-    );
-
-    updateVoiceControls();
-
-  };
-
-}
+  }
+);
 
 
-if (pitchPlus) {
+/* PITCH */
 
-  pitchPlus.onclick = () => {
+$("pitch_minus")?.addEventListener(
+  "click",
+  ()=>{
 
-    pitchValue = Math.min(
-      20,
-      pitchValue + 1
-    );
+    pitchValue =
+      Math.max(
+        -20,
+        pitchValue-1
+      );
 
-    updateVoiceControls();
+    updateControls();
 
-  };
-
-}
-
-
-/* =========================
-   VOLUME
-========================= */
-
-const volumeMinus = $("volume_minus");
-const volumePlus = $("volume_plus");
-
-if (volumeMinus) {
-
-  volumeMinus.onclick = () => {
-
-    volumeValue = Math.max(
-      -20,
-      volumeValue - 1
-    );
-
-    updateVoiceControls();
-
-  };
-
-}
+  }
+);
 
 
-if (volumePlus) {
+$("pitch_plus")?.addEventListener(
+  "click",
+  ()=>{
 
-  volumePlus.onclick = () => {
+    pitchValue =
+      Math.min(
+        20,
+        pitchValue+1
+      );
 
-    volumeValue = Math.min(
-      20,
-      volumeValue + 1
-    );
+    updateControls();
 
-    updateVoiceControls();
+  }
+);
 
-  };
 
-}
+/* VOLUME */
+
+$("volume_minus")?.addEventListener(
+  "click",
+  ()=>{
+
+    volumeValue =
+      Math.max(
+        -20,
+        volumeValue-1
+      );
+
+    updateControls();
+
+  }
+);
+
+
+$("volume_plus")?.addEventListener(
+  "click",
+  ()=>{
+
+    volumeValue =
+      Math.min(
+        20,
+        volumeValue+1
+      );
+
+    updateControls();
+
+  }
+);
 
 
 /* =========================
    VOICE BOOST
 ========================= */
 
-document.querySelectorAll(".boost-btn")
-  .forEach(button => {
+document.querySelectorAll(
+  ".boost-btn"
+).forEach(button=>{
 
-    button.addEventListener("click", () => {
+  button.addEventListener(
+    "click",
+    ()=>{
 
-      document.querySelectorAll(".boost-btn")
-        .forEach(btn =>
-          btn.classList.remove("active")
+      document.querySelectorAll(
+        ".boost-btn"
+      ).forEach(btn=>{
+
+        btn.classList.remove(
+          "active"
         );
 
-      button.classList.add("active");
+      });
 
-      boostValue =
-        Number(button.dataset.boost || 0);
 
-      volumeValue = boostValue;
+      button.classList.add(
+        "active"
+      );
 
-      updateVoiceControls();
 
-    });
+      volumeValue =
+        Number(
+          button.dataset.boost || 0
+        );
 
-  });
+
+      updateControls();
+
+    }
+  );
+
+});
 
 
 /* =========================
-   ADVANCED CONTROLS
+   ADVANCED
 ========================= */
 
-const advancedBtn =
-  document.getElementById("advanced_toggle");
+$("advanced_toggle")?.addEventListener(
+  "click",
+  ()=>{
 
-const advanced =
-  document.getElementById("advanced_controls");
+    $("advanced_controls")
+      ?.classList.toggle(
+        "hidden"
+      );
 
-if (advancedBtn && advanced) {
-
-  advancedBtn.onclick = () => {
-
-    advanced.classList.toggle("hidden");
-
-  };
-
-}
+  }
+);
 
 
 /* =========================
    USAGE
 ========================= */
 
+const USAGE_LIMIT = 10000;
+
 let usage = {
-  todayCharacters: 0,
-  todayGenerations: 0
+
+  todayCharacters:0,
+
+  todayGenerations:0,
+
+  lastGeneration:""
+
 };
 
 
-function updateUsageUI() {
+function loadUsage(){
 
-  const usageMini =
-    document.querySelector(".usage-mini");
-
-  if (usageMini) {
-
-    usageMini.textContent =
-      "📊 Usage " +
-      usage.todayCharacters;
-
-  }
-
-  const used =
-    document.getElementById("usage_used");
-
-  const generations =
-    document.getElementById("usage_generations");
-
-  if (used) {
-    used.textContent =
-      usage.todayCharacters +
-      " characters";
-  }
-
-  if (generations) {
-    generations.textContent =
-      usage.todayGenerations;
-  }
-
-}
-
-
-function loadUsage() {
-
-  try {
+  try{
 
     const saved =
       localStorage.getItem(
         "ai_voice_v3_usage"
       );
 
-    if (saved) {
 
-      usage = JSON.parse(saved);
+    if(saved){
+
+      const parsed =
+        JSON.parse(saved);
+
+      if(
+        parsed &&
+        typeof parsed === "object"
+      ){
+
+        usage = {
+          ...usage,
+          ...parsed
+        };
+
+      }
 
     }
 
-  } catch (error) {
+  }catch(error){
 
     console.log(
       "Usage load error",
@@ -528,21 +589,22 @@ function loadUsage() {
 
   }
 
-  updateUsageUI();
+
+  updateUsage();
 
 }
 
 
-function saveUsage() {
+function saveUsage(){
 
-  try {
+  try{
 
     localStorage.setItem(
       "ai_voice_v3_usage",
       JSON.stringify(usage)
     );
 
-  } catch (error) {
+  }catch(error){
 
     console.log(
       "Usage save error",
@@ -554,259 +616,350 @@ function saveUsage() {
 }
 
 
-/* =========================
-   USAGE MODAL
-========================= */
+function updateUsage(){
 
-const usageMini =
-  document.querySelector(".usage-mini");
-
-const usageModal =
-  document.getElementById("usage_modal");
-
-const usageClose =
-  document.getElementById("usage_close");
+  const used =
+    usage.todayCharacters;
 
 
-if (usageMini && usageModal) {
+  const percent =
+    Math.min(
+      100,
+      Math.round(
+        (used/USAGE_LIMIT)*100
+      )
+    );
 
-  usageMini.onclick = () => {
 
-    usageModal.classList.add("show");
+  if($("usage_percent")){
 
-  };
+    $("usage_percent").textContent =
+      percent + "%";
+
+  }
+
+
+  if($("usage_summary")){
+
+    $("usage_summary").textContent =
+      used.toLocaleString("en-IN") +
+      " characters used today";
+
+  }
+
+
+  if($("usage_used")){
+
+    $("usage_used").textContent =
+      used.toLocaleString("en-IN") +
+      " characters";
+
+  }
+
+
+  if($("usage_remaining")){
+
+    $("usage_remaining").textContent =
+      Math.max(
+        0,
+        USAGE_LIMIT-used
+      ).toLocaleString("en-IN") +
+      " characters";
+
+  }
+
+
+  if($("usage_generations")){
+
+    $("usage_generations").textContent =
+      usage.todayGenerations;
+
+  }
+
+
+  if($("usage_last")){
+
+    $("usage_last").textContent =
+      usage.lastGeneration ||
+      "अभी कोई generation नहीं";
+
+  }
+
+
+  if($("usage_fill")){
+
+    $("usage_fill").style.width =
+      percent + "%";
+
+  }
+
+
+  if($("usage_mini")){
+
+    $("usage_mini").textContent =
+      "📊 Usage " +
+      percent +
+      "%";
+
+  }
 
 }
 
 
-if (usageClose && usageModal) {
+function openUsage(){
 
-  usageClose.onclick = () => {
-
-    usageModal.classList.remove("show");
-
-  };
+  $("usage_modal")
+    ?.classList.add("show");
 
 }
 
 
-if (usageModal) {
+$("usage_mini")?.addEventListener(
+  "click",
+  openUsage
+);
 
-  usageModal.addEventListener(
-    "click",
-    event => {
 
-      if (
-        event.target === usageModal
-      ) {
+$("usage_card")?.addEventListener(
+  "click",
+  openUsage
+);
 
-        usageModal.classList.remove(
-          "show"
-        );
 
-      }
+$("usage_close")?.addEventListener(
+  "click",
+  ()=>{
+
+    $("usage_modal")
+      ?.classList.remove("show");
+
+  }
+);
+
+
+$("usage_modal")?.addEventListener(
+  "click",
+  event=>{
+
+    if(
+      event.target ===
+      $("usage_modal")
+    ){
+
+      $("usage_modal")
+        .classList.remove("show");
 
     }
-  );
 
-}
-
-
-/* =========================
-   VOICE PREVIEW
-========================= */
-
-document.querySelectorAll(
-  ".voice-preview"
-).forEach(button => {
-
-  button.addEventListener(
-    "click",
-    async event => {
-
-      event.stopPropagation();
-
-      const voice =
-        button.dataset.voice;
-
-      if (!voice) return;
-
-      setStatus(
-        "⏳ Voice preview बनाई जा रही है...",
-        "loading"
-      );
-
-      try {
-
-        const response =
-          await fetch("/api/tts", {
-
-            method: "POST",
-
-            headers: {
-              "Content-Type":
-                "application/json"
-            },
-
-            body: JSON.stringify({
-
-              text:
-                "नमस्कार! यह AI Voice Studio की voice preview है।",
-
-              voice: voice,
-
-              style: "neutral",
-
-              preset: "custom",
-
-              rate: 0,
-
-              pitch: 0,
-
-              volume: 0,
-
-              auto_director: false,
-
-              auto_emotion: false,
-
-              auto_pause: true,
-
-              pronunciation: true
-
-            })
-
-          });
-
-
-        const data =
-          await response.json();
-
-
-        if (!response.ok) {
-
-          throw new Error(
-            data.detail ||
-            "Preview failed"
-          );
-
-        }
-
-
-        const bytes =
-          Uint8Array.from(
-            atob(data.audio_base64),
-            character =>
-              character.charCodeAt(0)
-          );
-
-
-        const audioUrl =
-          URL.createObjectURL(
-
-            new Blob(
-              [bytes],
-              {
-                type:
-                  data.mime ||
-                  "audio/mpeg"
-              }
-            )
-
-          );
-
-
-        const audio =
-          document.getElementById(
-            "preview_audio"
-          );
-
-
-        if (audio) {
-
-          audio.src = audioUrl;
-          audio.play();
-
-        }
-
-
-        setStatus(
-          "▶️ Voice preview तैयार है।",
-          "success"
-        );
-
-
-      } catch (error) {
-
-        setStatus(
-          "❌ " + error.message,
-          "error"
-        );
-
-      }
-
-    }
-  );
-
-});
+  }
+);
 
 
 /* =========================
-   VOICE SELECTION
+   VOICE LIBRARY
 ========================= */
 
-document.querySelectorAll(
-  ".voice-card"
-).forEach(card => {
+function renderVoiceLibrary(
+  voices
+){
 
-  card.addEventListener(
-    "click",
-    () => {
+  const container =
+    $("voice_library");
 
-      document.querySelectorAll(
-        ".voice-card"
-      ).forEach(item =>
-        item.classList.remove(
-          "selected"
+  if(!container) return;
+
+
+  container.innerHTML = "";
+
+
+  Object.entries(
+    voices
+  ).forEach(
+    ([key,voice])=>{
+
+      const card =
+        document.createElement(
+          "div"
+        );
+
+      card.className =
+        "voice-card";
+
+
+      card.dataset.voice =
+        key;
+
+
+      const icon =
+        voice.label.includes(
+          "Female"
         )
+        ? "👩"
+        : "👨";
+
+
+      card.innerHTML = `
+
+        <div class="voice-avatar">
+          ${icon}
+        </div>
+
+        <div class="voice-info">
+
+          <b>
+            ${voice.label}
+          </b>
+
+          <small>
+            Hindi Neural Voice
+          </small>
+
+        </div>
+
+        <button
+          class="voice-preview"
+          data-voice="${key}"
+          type="button"
+        >
+          ▶
+        </button>
+
+      `;
+
+
+      container.appendChild(
+        card
       );
 
-      card.classList.add(
-        "selected"
+
+      card.addEventListener(
+        "click",
+        event=>{
+
+          if(
+            event.target.closest(
+              ".voice-preview"
+            )
+          ){
+
+            return;
+
+          }
+
+
+          selectVoice(key);
+
+        }
       );
-
-      const voice =
-        card.dataset.voice;
-
-      const voiceSelect =
-        $("voice");
-
-      if (
-        voiceSelect &&
-        voice
-      ) {
-
-        voiceSelect.value =
-          voice;
-
-      }
 
     }
   );
 
-});
+
+  document.querySelectorAll(
+    ".voice-preview"
+  ).forEach(button=>{
+
+    button.addEventListener(
+      "click",
+      event=>{
+
+        event.stopPropagation();
+
+        previewVoice(
+          button.dataset.voice
+        );
+
+      }
+    );
+
+  });
+
+}
+
+
+function selectVoice(
+  voice
+){
+
+  if($("voice")){
+
+    $("voice").value =
+      voice;
+
+  }
+
+
+  document.querySelectorAll(
+    ".voice-card"
+  ).forEach(card=>{
+
+    card.classList.toggle(
+      "selected",
+      card.dataset.voice===voice
+    );
+
+  });
+
+}
 
 
 /* =========================
-   LOAD CONFIG
+   PREVIEW VOICE
 ========================= */
 
-async function loadConfig() {
+async function previewVoice(
+  voice
+){
 
-  try {
+  setStatus(
+    "⏳ Voice preview बनाई जा रही है...",
+    "loading"
+  );
+
+
+  try{
 
     const response =
       await fetch(
-        "/api/config?version=pro-v3"
+        "/api/tts",
+        {
+
+          method:"POST",
+
+          headers:{
+            "Content-Type":
+              "application/json"
+          },
+
+          body:JSON.stringify({
+
+            text:
+              "नमस्कार! यह AI Voice Studio की voice preview है।",
+
+            voice:voice,
+
+            style:"neutral",
+
+            preset:"custom",
+
+            rate:0,
+
+            pitch:0,
+
+            volume:0,
+
+            auto_director:false,
+
+            auto_emotion:false,
+
+            auto_pause:true,
+
+            pronunciation:true
+
+          })
+
+        }
       );
 
 
@@ -814,72 +967,61 @@ async function loadConfig() {
       await response.json();
 
 
-    if (!response.ok) {
+    if(!response.ok){
 
       throw new Error(
         data.detail ||
-        "Config failed"
+        "Preview failed"
       );
 
     }
 
 
-    const voiceSelect =
-      $("voice");
+    const bytes =
+      Uint8Array.from(
+        atob(
+          data.audio_base64
+        ),
+        character =>
+          character.charCodeAt(0)
+      );
 
 
-    if (
-      voiceSelect &&
-      data.voices
-    ) {
-
-      voiceSelect.innerHTML =
-
-        Object.entries(
-          data.voices
+    const url =
+      URL.createObjectURL(
+        new Blob(
+          [bytes],
+          {
+            type:
+              data.mime ||
+              "audio/mpeg"
+          }
         )
+      );
 
-        .map(
-          ([key, voice]) =>
-            `<option value="${key}">
-              ${voice.label}
-            </option>`
-        )
 
-        .join("");
+    if($("preview_audio")){
+
+      $("preview_audio")
+        .classList.remove(
+          "hidden"
+        );
+
+      $("preview_audio").src =
+        url;
+
+      $("preview_audio").play();
 
     }
 
 
-    const styleSelect =
-      $("style");
+    setStatus(
+      "▶️ Voice preview तैयार है।",
+      "success"
+    );
 
 
-    if (
-      styleSelect &&
-      data.styles
-    ) {
-
-      styleSelect.innerHTML =
-
-        data.styles
-
-          .map(
-            style =>
-              `<option value="${style}">
-                ${style}
-              </option>`
-          )
-
-          .join("");
-
-    }
-
-
-    applyPreset();
-
-
-  } catch (error) {
+  }catch(error){
 
     setStatus(
       "❌ " + error.message,
@@ -892,237 +1034,417 @@ async function loadConfig() {
 
 
 /* =========================
-   GENERATE FULL VOICE
+   FULL GENERATE
 ========================= */
 
-const generate =
-  $("generate");
+$("generate")?.addEventListener(
+  "click",
+  async ()=>{
+
+    const text =
+      $("text")?.value.trim() ||
+      "";
 
 
-if (generate) {
+    if(!text){
 
-  generate.onclick =
-    async () => {
+      setStatus(
+        "⚠️ पहले script लिखें।",
+        "error"
+      );
 
-      const text =
-        textBox ?
-        textBox.value.trim() :
-        "";
+      return;
+
+    }
 
 
-      if (!text) {
+    if(text.length>12000){
 
-        setStatus(
-          "⚠️ पहले script लिखें।",
-          "error"
+      setStatus(
+        "⚠️ Script 12000 characters से ज्यादा है।",
+        "error"
+      );
+
+      return;
+
+    }
+
+
+    if(
+      usage.todayCharacters +
+      text.length >
+      USAGE_LIMIT
+    ){
+
+      setStatus(
+        "⚠️ App usage limit पूरी हो गई है।",
+        "error"
+      );
+
+      return;
+
+    }
+
+
+    const generate =
+      $("generate");
+
+
+    generate.disabled =
+      true;
+
+
+    setStatus(
+      "⏳ Professional voice बनाई जा रही है...",
+      "loading"
+    );
+
+
+    try{
+
+      const response =
+        await fetch(
+          "/api/tts",
+          {
+
+            method:"POST",
+
+            headers:{
+              "Content-Type":
+                "application/json"
+            },
+
+            body:JSON.stringify({
+
+              text:text,
+
+              voice:
+                $("voice")?.value ||
+                "arjun",
+
+              style:
+                $("style")?.value ||
+                "neutral",
+
+              preset:
+                $("preset")?.value ||
+                "custom",
+
+              rate:rateValue,
+
+              pitch:pitchValue,
+
+              volume:volumeValue,
+
+              auto_director:
+                $("auto_director")?.checked ??
+                true,
+
+              auto_emotion:
+                $("auto_emotion")?.checked ??
+                true,
+
+              auto_pause:
+                $("auto_pause")?.checked ??
+                true,
+
+              pronunciation:
+                $("pronunciation")?.checked ??
+                true
+
+            })
+
+          }
         );
 
-        return;
+
+      const data =
+        await response.json();
+
+
+      if(!response.ok){
+
+        throw new Error(
+          data.detail ||
+          "Voice generation failed"
+        );
 
       }
 
 
-      if (text.length > 12000) {
-
-        setStatus(
-          "⚠️ Script 12000 characters से ज्यादा है।",
-          "error"
+      const bytes =
+        Uint8Array.from(
+          atob(
+            data.audio_base64
+          ),
+          character =>
+            character.charCodeAt(0)
         );
 
-        return;
+
+      currentAudioUrl =
+        URL.createObjectURL(
+
+          new Blob(
+            [bytes],
+            {
+              type:
+                data.mime ||
+                "audio/mpeg"
+            }
+          )
+
+        );
+
+
+      if($("audio")){
+
+        $("audio").src =
+          currentAudioUrl;
 
       }
 
 
-      generate.disabled = true;
+      if($("download")){
+
+        $("download").href =
+          currentAudioUrl;
+
+      }
+
+
+      $("out")
+        ?.classList.remove(
+          "hidden"
+        );
+
+
+      /* USAGE */
+
+      usage.todayCharacters +=
+        text.length;
+
+
+      usage.todayGenerations +=
+        1;
+
+
+      usage.lastGeneration =
+        new Date().toLocaleString(
+          "hi-IN"
+        );
+
+
+      saveUsage();
+      updateUsage();
+
+
+      /* HISTORY */
+
+      saveHistory(text);
 
 
       setStatus(
-        "⏳ Professional voice बनाई जा रही है...",
-        "loading"
+        "✅ PRO V3 Voice तैयार है!",
+        "success"
       );
 
 
-      try {
+    }catch(error){
 
-        const response =
-          await fetch(
-            "/api/tts",
-            {
+      setStatus(
+        "❌ " + error.message,
+        "error"
+      );
 
-              method: "POST",
+    }finally{
 
-              headers: {
-                "Content-Type":
-                  "application/json"
-              },
+      generate.disabled =
+        false;
 
-              body: JSON.stringify({
+    }
 
-                text: text,
-
-                voice:
-                  $("voice") ?
-                  $("voice").value :
-                  "arjun",
-
-                style:
-                  $("style") ?
-                  $("style").value :
-                  "neutral",
-
-                preset:
-                  $("preset") ?
-                  $("preset").value :
-                  "custom",
-
-                rate:
-                  rateValue,
-
-                pitch:
-                  pitchValue,
-
-                volume:
-                  volumeValue,
-
-                auto_director:
-                  $("auto_director") ?
-                  $("auto_director").checked :
-                  true,
-
-                auto_emotion:
-                  $("auto_emotion") ?
-                  $("auto_emotion").checked :
-                  true,
-
-                auto_pause:
-                  $("auto_pause") ?
-                  $("auto_pause").checked :
-                  true,
-
-                pronunciation:
-                  $("pronunciation") ?
-                  $("pronunciation").checked :
-                  true
-
-              })
-
-            }
-          );
+  }
+);
 
 
-        const data =
-          await response.json();
+/* =========================
+   QUICK PREVIEW
+========================= */
+
+$("preview")?.addEventListener(
+  "click",
+  async ()=>{
+
+    const text =
+      $("text")?.value.trim() ||
+      "";
 
 
-        if (!response.ok) {
+    if(!text){
 
-          throw new Error(
-            data.detail ||
-            "Voice generation failed"
-          );
+      setStatus(
+        "⚠️ पहले script लिखें।",
+        "error"
+      );
 
-        }
+      return;
 
-
-        const bytes =
-          Uint8Array.from(
-            atob(data.audio_base64),
-            character =>
-              character.charCodeAt(0)
-          );
+    }
 
 
-        currentAudioUrl =
-          URL.createObjectURL(
-
-            new Blob(
-              [bytes],
-              {
-                type:
-                  data.mime ||
-                  "audio/mpeg"
-              }
-            )
-
-          );
+    const previewText =
+      text
+        .split(/[।!?]/)
+        .filter(Boolean)
+        .slice(0,2)
+        .join("।");
 
 
-        const audio =
-          $("audio");
+    await generatePreviewFromScript(
+      previewText
+    );
+
+  }
+);
 
 
-        if (audio) {
+async function generatePreviewFromScript(
+  text
+){
 
-          audio.src =
-            currentAudioUrl;
-
-        }
-
-
-        const download =
-          $("download");
+  setStatus(
+    "⏳ Quick Preview बनाई जा रही है...",
+    "loading"
+  );
 
 
-        if (download) {
+  try{
 
-          download.href =
-            currentAudioUrl;
+    const response =
+      await fetch(
+        "/api/tts",
+        {
+
+          method:"POST",
+
+          headers:{
+            "Content-Type":
+              "application/json"
+          },
+
+          body:JSON.stringify({
+
+            text:text,
+
+            voice:
+              $("voice")?.value ||
+              "arjun",
+
+            style:
+              $("style")?.value ||
+              "neutral",
+
+            preset:
+              $("preset")?.value ||
+              "custom",
+
+            rate:rateValue,
+
+            pitch:pitchValue,
+
+            volume:volumeValue,
+
+            auto_director:
+              $("auto_director")?.checked ??
+              true,
+
+            auto_emotion:
+              $("auto_emotion")?.checked ??
+              true,
+
+            auto_pause:
+              $("auto_pause")?.checked ??
+              true,
+
+            pronunciation:
+              $("pronunciation")?.checked ??
+              true
+
+          })
 
         }
+      );
 
 
-        const output =
-          $("out");
+    const data =
+      await response.json();
 
 
-        if (output) {
+    if(!response.ok){
 
-          output.classList.remove(
-            "hidden"
-          );
+      throw new Error(
+        data.detail ||
+        "Preview failed"
+      );
 
-        }
-
-
-        /* Usage */
-
-        usage.todayCharacters +=
-          text.length;
-
-        usage.todayGenerations +=
-          1;
-
-        saveUsage();
-        updateUsageUI();
+    }
 
 
-        /* History */
+    const bytes =
+      Uint8Array.from(
+        atob(
+          data.audio_base64
+        ),
+        character =>
+          character.charCodeAt(0)
+      );
 
-        saveHistory(text);
+
+    const url =
+      URL.createObjectURL(
+
+        new Blob(
+          [bytes],
+          {
+            type:
+              data.mime ||
+              "audio/mpeg"
+          }
+        )
+
+      );
 
 
-        setStatus(
-          "✅ PRO V3 Voice तैयार है!",
-          "success"
+    if($("preview_audio")){
+
+      $("preview_audio")
+        .classList.remove(
+          "hidden"
         );
 
+      $("preview_audio").src =
+        url;
 
-      } catch (error) {
+      $("preview_audio").play();
 
-        setStatus(
-          "❌ " + error.message,
-          "error"
-        );
+    }
 
-      } finally {
 
-        generate.disabled =
-          false;
+    setStatus(
+      "▶️ Quick Preview तैयार है।",
+      "success"
+    );
 
-      }
 
-    };
+  }catch(error){
+
+    setStatus(
+      "❌ " + error.message,
+      "error"
+    );
+
+  }
 
 }
 
@@ -1131,9 +1453,11 @@ if (generate) {
    HISTORY
 ========================= */
 
-function saveHistory(text) {
+function saveHistory(
+  text
+){
 
-  try {
+  try{
 
     let history =
       JSON.parse(
@@ -1146,7 +1470,10 @@ function saveHistory(text) {
     history.unshift({
 
       text:
-        text.substring(0, 80),
+        text.substring(
+          0,
+          80
+        ),
 
       characters:
         text.length,
@@ -1160,7 +1487,10 @@ function saveHistory(text) {
 
 
     history =
-      history.slice(0, 20);
+      history.slice(
+        0,
+        20
+      );
 
 
     localStorage.setItem(
@@ -1169,7 +1499,10 @@ function saveHistory(text) {
     );
 
 
-  } catch (error) {
+    renderHistory();
+
+
+  }catch(error){
 
     console.log(
       "History error",
@@ -1181,12 +1514,366 @@ function saveHistory(text) {
 }
 
 
+function renderHistory(){
+
+  const container =
+    $("history_list");
+
+  const recent =
+    $("recent_history");
+
+
+  let history = [];
+
+
+  try{
+
+    history =
+      JSON.parse(
+        localStorage.getItem(
+          "ai_voice_v3_history"
+        ) || "[]"
+      );
+
+  }catch(error){
+
+    history = [];
+
+  }
+
+
+  if(container){
+
+    if(!history.length){
+
+      container.innerHTML =
+        `<p class="hint">
+          अभी कोई history नहीं है।
+        </p>`;
+
+    }else{
+
+      container.innerHTML =
+        history.map(
+          item=>`
+
+            <div class="history-item">
+
+              <div>
+
+                <b>
+                  ${escapeHTML(item.text)}
+                </b>
+
+                <small>
+                  ${item.characters} characters •
+                  ${escapeHTML(item.time)}
+                </small>
+
+              </div>
+
+            </div>
+
+          `
+        ).join("");
+
+    }
+
+  }
+
+
+  if(recent){
+
+    const latest =
+      history.slice(
+        0,
+        3
+      );
+
+
+    if(!latest.length){
+
+      recent.innerHTML =
+        `<p class="hint">
+          अभी कोई voice history नहीं है।
+        </p>`;
+
+    }else{
+
+      recent.innerHTML =
+        latest.map(
+          item=>`
+
+            <div class="history-item">
+
+              <div>
+
+                <b>
+                  ${escapeHTML(item.text)}
+                </b>
+
+                <small>
+                  ${item.characters} characters
+                </small>
+
+              </div>
+
+            </div>
+
+          `
+        ).join("");
+
+    }
+
+  }
+
+}
+
+
+function escapeHTML(
+  value
+){
+
+  return String(value)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+
+}
+
+
+/* =========================
+   AI SCRIPT PLACEHOLDER
+========================= */
+
+$("script_generate")?.addEventListener(
+  "click",
+  ()=>{
+
+    const topic =
+      $("script_topic")
+        ?.value.trim();
+
+
+    if(!topic){
+
+      alert(
+        "पहले topic लिखें।"
+      );
+
+      return;
+
+    }
+
+
+    /*
+      AI Script Generator का backend
+      अभी अलग endpoint नहीं है।
+
+      इसलिए फिलहाल यह बताता है कि
+      feature बाद में backend से जुड़ेगा।
+    */
+
+    setStatus(
+      "ℹ️ AI Script Generator को backend AI service से जोड़ना बाकी है।",
+      "loading"
+    );
+
+  }
+);
+
+
+/* =========================
+   CLEAN SCRIPT
+========================= */
+
+$("clean_script")?.addEventListener(
+  "click",
+  ()=>{
+
+    const text =
+      $("clean_text")
+        ?.value.trim();
+
+
+    if(!text){
+
+      alert(
+        "पहले rough script डालें।"
+      );
+
+      return;
+
+    }
+
+
+    /*
+      Basic local cleaning.
+      यह external AI service नहीं है।
+    */
+
+    let cleaned =
+      text
+        .replace(
+          /\b(हम्म|उम्म|मतलब|तो दोस्तों|दोस्तो)\b/gi,
+          ""
+        )
+        .replace(
+          /\s+/g,
+          " "
+        )
+        .trim();
+
+
+    $("script_output").value =
+      cleaned;
+
+
+    $("script_result")
+      ?.classList.remove(
+        "hidden"
+      );
+
+  }
+);
+
+
+/* =========================
+   USE SCRIPT
+========================= */
+
+$("use_script")?.addEventListener(
+  "click",
+  ()=>{
+
+    const output =
+      $("script_output")
+        ?.value.trim();
+
+
+    if(!output) return;
+
+
+    $("text").value =
+      output;
+
+
+    $("count").textContent =
+      output.length +
+      " / 12000";
+
+
+    showSection(
+      "voice"
+    );
+
+  }
+);
+
+
 /* =========================
    INITIALIZE
 ========================= */
 
-updateVoiceControls();
+updateControls();
 
 loadUsage();
 
+renderHistory();
+
 loadConfig();
+
+
+/* =========================
+   CONFIG
+========================= */
+
+async function loadConfig(){
+
+  try{
+
+    const response =
+      await fetch(
+        "/api/config?version=pro-v3"
+      );
+
+
+    const data =
+      await response.json();
+
+
+    if(!response.ok){
+
+      throw new Error(
+        data.detail ||
+        "Config failed"
+      );
+
+    }
+
+
+    if(
+      $("voice") &&
+      data.voices
+    ){
+
+      $("voice").innerHTML =
+        Object.entries(
+          data.voices
+        )
+        .map(
+          ([key,voice])=>
+            `<option value="${key}">
+              ${voice.label}
+            </option>`
+        )
+        .join("");
+
+
+      renderVoiceLibrary(
+        data.voices
+      );
+
+
+      selectVoice(
+        Object.keys(
+          data.voices
+        )[0] || "arjun"
+      );
+
+    }
+
+
+    if(
+      $("style") &&
+      data.styles
+    ){
+
+      $("style").innerHTML =
+        data.styles
+          .map(
+            style=>
+              `<option value="${style}">
+                ${style}
+              </option>`
+          )
+          .join("");
+
+    }
+
+
+    applyPreset();
+
+
+  }catch(error){
+
+    setStatus(
+      "❌ " + error.message,
+      "error"
+    );
+
+  }
+
+}
