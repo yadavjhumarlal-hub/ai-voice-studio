@@ -1895,3 +1895,372 @@ async function loadConfig(){
   }
 
 }
+/* =========================
+   SETTINGS
+========================= */
+
+const DEFAULT_SETTINGS = {
+
+  voice: "arjun",
+
+  preset: "custom",
+
+  rate: 0,
+
+  pitch: 0,
+
+  volume: 0,
+
+  director: true,
+
+  emotion: true,
+
+  pause: true,
+
+  pronunciation: true
+
+};
+
+
+let savedSettings = {
+  ...DEFAULT_SETTINGS
+};
+
+
+/* LOAD SETTINGS */
+
+function loadSettings(){
+
+  try{
+
+    const saved =
+      localStorage.getItem(
+        "ai_voice_v3_settings"
+      );
+
+
+    if(saved){
+
+      const parsed =
+        JSON.parse(saved);
+
+      if(
+        parsed &&
+        typeof parsed === "object"
+      ){
+
+        savedSettings = {
+          ...DEFAULT_SETTINGS,
+          ...parsed
+        };
+
+      }
+
+    }
+
+  }catch(error){
+
+    console.log(
+      "Settings load error",
+      error
+    );
+
+  }
+
+
+  fillSettingsForm();
+
+}
+
+
+/* FILL SETTINGS FORM */
+
+function fillSettingsForm(){
+
+  if($("setting_voice")){
+
+    $("setting_voice").value =
+      savedSettings.voice;
+
+  }
+
+
+  if($("setting_preset")){
+
+    $("setting_preset").value =
+      savedSettings.preset;
+
+  }
+
+
+  if($("setting_rate")){
+
+    $("setting_rate").value =
+      savedSettings.rate;
+
+  }
+
+
+  if($("setting_pitch")){
+
+    $("setting_pitch").value =
+      savedSettings.pitch;
+
+  }
+
+
+  if($("setting_volume")){
+
+    $("setting_volume").value =
+      savedSettings.volume;
+
+  }
+
+
+  if($("setting_director")){
+
+    $("setting_director").checked =
+      savedSettings.director;
+
+  }
+
+
+  if($("setting_emotion")){
+
+    $("setting_emotion").checked =
+      savedSettings.emotion;
+
+  }
+
+
+  if($("setting_pause")){
+
+    $("setting_pause").checked =
+      savedSettings.pause;
+
+  }
+
+
+  if($("setting_pronunciation")){
+
+    $("setting_pronunciation").checked =
+      savedSettings.pronunciation;
+
+  }
+
+}
+
+
+/* SAVE SETTINGS */
+
+$("save_settings")?.addEventListener(
+  "click",
+  ()=>{
+
+    savedSettings = {
+
+      voice:
+        $("setting_voice")?.value ||
+        "arjun",
+
+      preset:
+        $("setting_preset")?.value ||
+        "custom",
+
+      rate:
+        Number(
+          $("setting_rate")?.value ||
+          0
+        ),
+
+      pitch:
+        Number(
+          $("setting_pitch")?.value ||
+          0
+        ),
+
+      volume:
+        Number(
+          $("setting_volume")?.value ||
+          0
+        ),
+
+      director:
+        $("setting_director")?.checked ??
+        true,
+
+      emotion:
+        $("setting_emotion")?.checked ??
+        true,
+
+      pause:
+        $("setting_pause")?.checked ??
+        true,
+
+      pronunciation:
+        $("setting_pronunciation")?.checked ??
+        true
+
+    };
+
+
+    try{
+
+      localStorage.setItem(
+
+        "ai_voice_v3_settings",
+
+        JSON.stringify(
+          savedSettings
+        )
+
+      );
+
+
+      applySavedSettings();
+
+
+      if($("settings_status")){
+
+        $("settings_status").textContent =
+          "✅ Settings save हो गईं।";
+
+        setTimeout(
+          ()=>{
+            $("settings_status").textContent =
+              "";
+          },
+          2500
+        );
+
+      }
+
+    }catch(error){
+
+      console.log(
+        "Settings save error",
+        error
+      );
+
+    }
+
+  }
+);
+
+
+/* APPLY SETTINGS */
+
+function applySavedSettings(){
+
+  if($("voice")){
+
+    selectVoice(
+      savedSettings.voice
+    );
+
+  }
+
+
+  if($("preset")){
+
+    $("preset").value =
+      savedSettings.preset;
+
+  }
+
+
+  rateValue =
+    savedSettings.rate;
+
+  pitchValue =
+    savedSettings.pitch;
+
+  volumeValue =
+    savedSettings.volume;
+
+
+  if($("auto_director")){
+
+    $("auto_director").checked =
+      savedSettings.director;
+
+  }
+
+
+  if($("auto_emotion")){
+
+    $("auto_emotion").checked =
+      savedSettings.emotion;
+
+  }
+
+
+  if($("auto_pause")){
+
+    $("auto_pause").checked =
+      savedSettings.pause;
+
+  }
+
+
+  if($("pronunciation")){
+
+    $("pronunciation").checked =
+      savedSettings.pronunciation;
+
+  }
+
+
+  updateControls();
+
+}
+
+
+/* SETTINGS VOICE LIST */
+
+function populateSettingsVoiceList(
+  voices
+){
+
+  const select =
+    $("setting_voice");
+
+  if(!select) return;
+
+
+  select.innerHTML = "";
+
+
+  Object.entries(
+    voices
+  ).forEach(
+    ([key,voice])=>{
+
+      const option =
+        document.createElement(
+          "option"
+        );
+
+      option.value =
+        key;
+
+      option.textContent =
+        voice.label;
+
+      select.appendChild(
+        option
+      );
+
+    }
+  );
+
+
+  select.value =
+    savedSettings.voice;
+
+}
+
+
+/* SETTINGS INITIALIZATION */
+
+loadSettings();
