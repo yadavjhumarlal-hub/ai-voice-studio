@@ -683,32 +683,244 @@
 
     <!-- SETTINGS -->
 
-    <section
-      id="settings_section"
-      class="hidden"
+<section
+  id="settings_section"
+  class="hidden"
+>
+
+  <div class="card settings-card">
+
+    <div class="section-title">
+      ⚙️ <b>Settings</b>
+    </div>
+
+    <p class="hint">
+      Voice Studio की default settings यहाँ बदलें।
+    </p>
+
+
+    <!-- DEFAULT VOICE -->
+
+    <div class="setting-item">
+
+      <label>
+        Default Voice
+      </label>
+
+      <select id="setting_voice">
+        <option value="arjun">Arjun — Male</option>
+      </select>
+
+    </div>
+
+
+    <!-- DEFAULT PRESET -->
+
+    <div class="setting-item">
+
+      <label>
+        Default Preset
+      </label>
+
+      <select id="setting_preset">
+
+        <option value="custom">⚙️ Custom</option>
+
+        <option value="viral_fact">🔥 Viral Fact</option>
+
+        <option value="news">📰 News</option>
+
+        <option value="mystery">😱 Mystery</option>
+
+        <option value="story">📖 Storytelling</option>
+
+        <option value="education">🎓 Education</option>
+
+        <option value="emotional">❤️ Emotional</option>
+
+        <option value="motivation">💪 Motivation</option>
+
+        <option value="funny">😂 Funny</option>
+
+      </select>
+
+    </div>
+
+
+    <!-- DEFAULT SPEED -->
+
+    <div class="setting-item">
+
+      <label>
+        Default Speed
+      </label>
+
+      <select id="setting_rate">
+
+        <option value="-10">-10%</option>
+        <option value="-5">-5%</option>
+        <option value="0" selected>0%</option>
+        <option value="5">+5%</option>
+        <option value="10">+10%</option>
+
+      </select>
+
+    </div>
+
+
+    <!-- DEFAULT PITCH -->
+
+    <div class="setting-item">
+
+      <label>
+        Default Pitch
+      </label>
+
+      <select id="setting_pitch">
+
+        <option value="-10">-10%</option>
+        <option value="-5">-5%</option>
+        <option value="0" selected>0%</option>
+        <option value="5">+5%</option>
+        <option value="10">+10%</option>
+
+      </select>
+
+    </div>
+
+
+    <!-- DEFAULT VOLUME -->
+
+    <div class="setting-item">
+
+      <label>
+        Default Volume
+      </label>
+
+      <select id="setting_volume">
+
+        <option value="-10">-10%</option>
+        <option value="-5">-5%</option>
+        <option value="0" selected>0%</option>
+        <option value="5">+5%</option>
+        <option value="10">+10%</option>
+
+      </select>
+
+    </div>
+
+
+    <!-- TOGGLES -->
+
+    <div class="setting-item toggle-setting">
+
+      <span>
+        <b>Auto Voice Director</b>
+        <small>Script के अनुसार delivery</small>
+      </span>
+
+      <label class="switch">
+
+        <input
+          id="setting_director"
+          type="checkbox"
+          checked
+        >
+
+        <i></i>
+
+      </label>
+
+    </div>
+
+
+    <div class="setting-item toggle-setting">
+
+      <span>
+        <b>Auto Emotion</b>
+        <small>Sentence mood के अनुसार</small>
+      </span>
+
+      <label class="switch">
+
+        <input
+          id="setting_emotion"
+          type="checkbox"
+          checked
+        >
+
+        <i></i>
+
+      </label>
+
+    </div>
+
+
+    <div class="setting-item toggle-setting">
+
+      <span>
+        <b>Natural Pause</b>
+        <small>Natural sentence pauses</small>
+      </span>
+
+      <label class="switch">
+
+        <input
+          id="setting_pause"
+          type="checkbox"
+          checked
+        >
+
+        <i></i>
+
+      </label>
+
+    </div>
+
+
+    <div class="setting-item toggle-setting">
+
+      <span>
+        <b>Smart Pronunciation</b>
+        <small>AI, YouTube, 5G, ₹ और %</small>
+      </span>
+
+      <label class="switch">
+
+        <input
+          id="setting_pronunciation"
+          type="checkbox"
+          checked
+        >
+
+        <i></i>
+
+      </label>
+
+    </div>
+
+
+    <button
+      id="save_settings"
+      class="generate settings-save"
     >
+      💾 Save Settings
+    </button>
 
-      <div class="card">
 
-        <div class="section-title">
-          ⚙️ <b>Settings</b>
-        </div>
+    <p
+      id="settings_status"
+      class="settings-status"
+    ></p>
 
-        <p class="hint">
-          AI Voice Studio PRO V3
-        </p>
 
-        <p class="hint">
-          API key browser में नहीं आती। Azure key server-side सुरक्षित रहती है।
-        </p>
+    <p class="hint">
+      Settings इसी device के browser में save रहेंगी।
+    </p>
 
-        <p class="hint">
-          Personal Creator Edition
-        </p>
+  </div>
 
-      </div>
-
-    </section>
+</section>
 
 
     <footer>
