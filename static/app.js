@@ -1785,6 +1785,24 @@ renderHistory();
 
 loadConfig();
 
+/* =========================
+   SELECTED VOICE PREVIEW
+========================= */
+
+$("selected_voice_preview")?.addEventListener(
+  "click",
+  ()=>{
+
+    const voice =
+      $("voice")?.value ||
+      "arjun";
+
+    previewVoice(
+      voice
+    );
+
+  }
+);
 
 /* =========================
    CONFIG
