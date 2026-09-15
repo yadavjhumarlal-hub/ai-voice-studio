@@ -727,3 +727,67 @@ footer{
   }
 
 }
+/* =========================
+   SETTINGS
+========================= */
+
+.settings-card{
+  margin-bottom:20px;
+}
+
+.setting-item{
+  margin:14px 0;
+}
+
+.setting-item label{
+  display:block;
+  font-size:13px;
+  font-weight:800;
+  margin-bottom:7px;
+}
+
+.setting-item select{
+  width:100%;
+}
+
+.toggle-setting{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:12px 0;
+  border-bottom:1px solid #edf0f4;
+}
+
+.toggle-setting:last-of-type{
+  border-bottom:0;
+}
+
+.toggle-setting span{
+  flex:1;
+}
+
+.toggle-setting b{
+  display:block;
+  font-size:13px;
+}
+
+.toggle-setting small{
+  display:block;
+  color:var(--muted);
+  font-size:11px;
+  margin-top:3px;
+}
+
+.settings-save{
+  margin-top:15px;
+}
+
+.settings-status{
+  min-height:20px;
+  text-align:center;
+  color:var(--success);
+  font-size:13px;
+  font-weight:800;
+  margin:8px 0 0;
+}
