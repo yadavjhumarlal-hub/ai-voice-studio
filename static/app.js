@@ -1832,6 +1832,98 @@ async function loadConfig(){
     }
 
 
+    /* =========================
+       VOICE DROPDOWN
+    ========================= */
+
+    if(
+      $("voice") &&
+      data.voices
+    ){
+
+      $("voice").innerHTML =
+        Object.entries(
+          data.voices
+        )
+        .map(
+          ([key,voice])=>
+            `<option value="${key}">
+              ${voice.label}
+            </option>`
+        )
+        .join("");
+
+
+      /* पुराना Voice Library अब दिखाई नहीं देगा */
+
+      renderVoiceLibrary(
+        data.voices
+      );
+
+
+      /* Settings में भी सभी voices */
+
+      populateSettingsVoiceList(
+        data.voices
+      );
+
+    }
+
+
+    /* =========================
+       STYLE
+    ========================= */
+
+    if(
+      $("style") &&
+      data.styles
+    ){
+
+      $("style").innerHTML =
+        data.styles
+          .map(
+            style=>
+              `<option value="${style}">
+                ${style}
+              </option>`
+          )
+          .join("");
+
+    }
+
+
+    /* =========================
+       APPLY SAVED SETTINGS
+    ========================= */
+
+    applySavedSettings();
+
+
+  }catch(error){
+
+    setStatus(
+      "❌ " + error.message,
+      "error"
+    );
+
+  }
+
+}
+
+    const data =
+      await response.json();
+
+
+    if(!response.ok){
+
+      throw new Error(
+        data.detail ||
+        "Config failed"
+      );
+
+    }
+
+
     if(
       $("voice") &&
       data.voices
