@@ -4,7 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#1769e0">
+
 <title>AI Voice Studio PRO V3</title>
+
 <link rel="stylesheet" href="/static/style.css">
 </head>
 
@@ -12,686 +14,823 @@
 
 <div class="app">
 
-<header class="topbar">
-  <button id="menuBtn" class="icon-btn">☰</button>
+  <!-- TOP BAR -->
+  <header class="topbar">
 
-  <div class="brand">
-    <strong>🎙️ AI Voice Studio</strong>
-    <small>PRO V3 • Personal Creator</small>
-  </div>
+    <button id="menu_btn" class="menu-btn" aria-label="Menu">
+      ☰
+    </button>
 
-  <button id="usageBtn" class="usage-mini">
-    📊 <span>Usage</span>
-  </button>
-</header>
-
-
-<!-- SIDEBAR -->
-
-<div id="overlay" class="overlay"></div>
-
-<aside id="sidebar" class="sidebar">
-
-  <div class="side-head">
-    <div>
-      <strong>AI Voice Studio</strong>
-      <small>PRO V3</small>
+    <div class="brand">
+      <strong>🎙️ AI Voice Studio PRO</strong>
+      <small>Personal Creator Edition • V3</small>
     </div>
 
-    <button id="closeMenu" class="icon-btn">×</button>
-  </div>
-
-  <nav>
-
-    <button class="nav-item active" data-page="dashboard">
-      🏠 <span>Dashboard</span>
+    <button id="usage_mini" class="usage-mini">
+      📊 Usage
     </button>
 
-    <button class="nav-item" data-page="voice">
-      🎙️ <span>Voice Studio</span>
-    </button>
-
-    <button class="nav-item" data-page="script">
-      📝 <span>Script Tools</span>
-    </button>
-
-    <button class="nav-item" data-page="history">
-      🕘 <span>History</span>
-    </button>
-
-    <button class="nav-item" data-page="usage">
-      📊 <span>Usage</span>
-    </button>
-
-    <button class="nav-item" data-page="settings">
-      ⚙️ <span>Settings</span>
-    </button>
-
-  </nav>
-
-  <div class="side-footer">
-    🔐 Server-side API<br>
-    Azure F0 Safe Mode
-  </div>
-
-</aside>
+  </header>
 
 
-<!-- USAGE PANEL -->
+  <!-- SIDEBAR -->
 
-<div id="usagePanel" class="modal hidden">
+  <aside id="sidebar" class="sidebar">
 
-  <div class="modal-card">
+    <div class="sidebar-head">
 
-    <div class="modal-head">
-      <strong>📊 Usage Details</strong>
-      <button id="closeUsage" class="icon-btn">×</button>
+      <div class="sidebar-title">
+        🎙️ AI Voice Studio
+      </div>
+
+      <button id="close_sidebar" class="close-sidebar">
+        ×
+      </button>
+
     </div>
 
-    <div class="usage-box">
 
-      <div class="usage-title">
-        <span>Today's App Usage</span>
-        <b id="usagePercent">0%</b>
+    <nav class="nav">
+
+      <button class="active" data-section="dashboard">
+        🏠 Dashboard
+      </button>
+
+      <button data-section="voice">
+        🎙️ Voice Studio
+      </button>
+
+      <button data-section="script">
+        📝 Script Tools
+      </button>
+
+      <button id="history_nav">
+        🕘 History
+      </button>
+
+      <button id="usage_nav">
+        📊 Usage
+      </button>
+
+      <button id="settings_nav">
+        ⚙️ Settings
+      </button>
+
+    </nav>
+
+  </aside>
+
+  <div id="overlay" class="overlay"></div>
+
+
+  <!-- MAIN -->
+
+  <main class="main">
+
+    <!-- HERO -->
+
+    <section class="hero">
+
+      <span class="pro-badge">
+        ● PRO V3 • PERSONAL EDITION
+      </span>
+
+      <h1>
+        Professional Hindi AI Voice
+      </h1>
+
+      <p>
+        YouTube Shorts के लिए natural और clean voice-over बनाएं।
+      </p>
+
+    </section>
+
+
+    <!-- DASHBOARD -->
+
+    <section id="dashboard_section">
+
+      <div class="dashboard-grid">
+
+        <button class="tool-card" data-open="voice">
+
+          <div class="tool-icon">
+            🎙️
+          </div>
+
+          <h3>
+            Voice Studio
+          </h3>
+
+          <p>
+            Script को professional Hindi voice में बदलें।
+          </p>
+
+        </button>
+
+
+        <button class="tool-card" data-open="script">
+
+          <div class="tool-icon">
+            ✨
+          </div>
+
+          <h3>
+            Script Tools
+          </h3>
+
+          <p>
+            Script को साफ और voice-ready बनाएं।
+          </p>
+
+        </button>
+
       </div>
 
-      <div class="progress">
-        <i id="usageProgress"></i>
+
+      <!-- USAGE -->
+
+      <button id="usage_card" class="tool-card usage-card">
+
+        <div class="usage-info">
+
+          <b>
+            📊 Usage
+          </b>
+
+          <small id="usage_summary">
+            आज का usage देखने के लिए tap करें
+          </small>
+
+        </div>
+
+        <div id="usage_percent" class="usage-percent">
+          0%
+        </div>
+
+      </button>
+
+
+      <!-- RECENT -->
+
+      <section class="card">
+
+        <div class="section-title">
+          🕘 <b>Recent Activity</b>
+        </div>
+
+        <div id="recent_history">
+
+          <p class="hint">
+            अभी कोई voice history नहीं है।
+          </p>
+
+        </div>
+
+      </section>
+
+    </section>
+
+
+    <!-- VOICE STUDIO -->
+
+    <section id="voice_section" class="hidden">
+
+      <div class="card">
+
+        <div class="section-title">
+          📝 <b>Script</b>
+        </div>
+
+        <textarea
+          id="text"
+          maxlength="12000"
+          placeholder="अपना Hindi script यहाँ लिखें..."
+        ></textarea>
+
+        <div class="between">
+
+          <span id="count">
+            0 / 12000
+          </span>
+
+          <button id="clear" class="small-btn">
+            Clear
+          </button>
+
+        </div>
+
       </div>
 
-      <div class="usage-grid">
 
-        <div>
-          <small>Characters Used</small>
-          <strong id="usedChars">0</strong>
+      <!-- PRESET -->
+
+      <div class="card">
+
+        <div class="section-title">
+          🎬 <b>YouTube Voice Preset</b>
         </div>
 
-        <div>
-          <small>Characters Remaining</small>
-          <strong id="remainingChars">—</strong>
+        <select id="preset">
+
+          <option value="custom">
+            ⚙️ Custom
+          </option>
+
+          <option value="viral_fact">
+            🔥 Viral Fact
+          </option>
+
+          <option value="news">
+            📰 News
+          </option>
+
+          <option value="mystery">
+            😱 Mystery
+          </option>
+
+          <option value="story">
+            📖 Storytelling
+          </option>
+
+          <option value="education">
+            🎓 Education
+          </option>
+
+          <option value="emotional">
+            ❤️ Emotional
+          </option>
+
+          <option value="motivation">
+            💪 Motivation
+          </option>
+
+          <option value="funny">
+            😂 Funny
+          </option>
+
+        </select>
+
+        <p class="hint">
+          Preset voice delivery को automatically adjust करता है।
+        </p>
+
+      </div>
+
+
+      <!-- VOICE -->
+
+      <div class="card">
+
+        <div class="section-title">
+          🎙️ <b>Voice</b>
         </div>
 
-        <div>
-          <small>Voices Generated</small>
-          <strong id="generatedCount">0</strong>
+        <select id="voice"></select>
+
+        <div id="voice_library" class="voice-list"></div>
+
+        <audio
+          id="preview_audio"
+          class="hidden"
+          controls
+        ></audio>
+
+      </div>
+
+
+      <!-- AI CONTROLS -->
+
+      <div class="card">
+
+        <div class="section-title">
+          🤖 <b>AI Controls</b>
         </div>
 
-        <div>
-          <small>Last Generation</small>
-          <strong id="lastGeneration">—</strong>
+        <div class="control-list">
+
+
+          <div class="control-item">
+
+            <span>
+              <b>Auto Voice Director</b>
+              <small>Script के अनुसार delivery</small>
+            </span>
+
+            <label class="switch">
+
+              <input
+                id="auto_director"
+                type="checkbox"
+                checked
+              >
+
+              <i></i>
+
+            </label>
+
+          </div>
+
+
+          <div class="control-item">
+
+            <span>
+              <b>Auto Emotion</b>
+              <small>Sentence mood के अनुसार</small>
+            </span>
+
+            <label class="switch">
+
+              <input
+                id="auto_emotion"
+                type="checkbox"
+                checked
+              >
+
+              <i></i>
+
+            </label>
+
+          </div>
+
+
+          <div class="control-item">
+
+            <span>
+              <b>Natural Pause</b>
+              <small>Natural sentence pauses</small>
+            </span>
+
+            <label class="switch">
+
+              <input
+                id="auto_pause"
+                type="checkbox"
+                checked
+              >
+
+              <i></i>
+
+            </label>
+
+          </div>
+
+
+          <div class="control-item">
+
+            <span>
+              <b>Smart Pronunciation</b>
+              <small>AI, YouTube, 5G, ₹ और %</small>
+            </span>
+
+            <label class="switch">
+
+              <input
+                id="pronunciation"
+                type="checkbox"
+                checked
+              >
+
+              <i></i>
+
+            </label>
+
+          </div>
+
+
         </div>
 
       </div>
 
-      <p class="usage-note">
-        App usage is tracked locally. Azure's actual quota may differ.
+
+      <!-- VOICE BOOST -->
+
+      <div class="card">
+
+        <div class="section-title">
+          🔊 <b>Voice Boost</b>
+        </div>
+
+        <div class="boost-grid">
+
+          <button class="boost-btn active" data-boost="0">
+            Normal
+          </button>
+
+          <button class="boost-btn" data-boost="5">
+            +5%
+          </button>
+
+          <button class="boost-btn" data-boost="10">
+            +10%
+          </button>
+
+          <button class="boost-btn" data-boost="15">
+            +15%
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <!-- ADVANCED VOICE -->
+
+      <div class="card">
+
+        <div class="section-title">
+          🎚️ <b>Voice Controls</b>
+        </div>
+
+
+        <div class="value-control">
+
+          <span>
+            Speed
+          </span>
+
+          <button id="rate_minus">
+            −
+          </button>
+
+          <span id="rate_value" class="value-display">
+            0%
+          </span>
+
+          <button id="rate_plus">
+            +
+          </button>
+
+        </div>
+
+
+        <div class="value-control">
+
+          <span>
+            Pitch
+          </span>
+
+          <button id="pitch_minus">
+            −
+          </button>
+
+          <span id="pitch_value" class="value-display">
+            0%
+          </span>
+
+          <button id="pitch_plus">
+            +
+          </button>
+
+        </div>
+
+
+        <div class="value-control">
+
+          <span>
+            Volume
+          </span>
+
+          <button id="volume_minus">
+            −
+          </button>
+
+          <span id="volume_value" class="value-display">
+            0%
+          </span>
+
+          <button id="volume_plus">
+            +
+          </button>
+
+        </div>
+
+
+        <button
+          id="advanced_toggle"
+          class="preview-btn"
+        >
+          ⚙️ Advanced Controls
+        </button>
+
+
+        <div
+          id="advanced_controls"
+          class="advanced hidden"
+        >
+
+          <p class="hint">
+            Speed: -30% से +30%
+          </p>
+
+          <p class="hint">
+            Pitch: -20% से +20%
+          </p>
+
+          <p class="hint">
+            Volume: -20% से +20%
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <!-- GENERATE -->
+
+      <button
+        id="preview"
+        class="preview-btn"
+      >
+        ▶️ Quick Voice Preview
+      </button>
+
+
+      <button
+        id="generate"
+        class="generate"
+      >
+        🎧 Generate Professional Voice
+      </button>
+
+
+      <p id="status"></p>
+
+
+      <!-- OUTPUT -->
+
+      <section
+        id="out"
+        class="card hidden"
+      >
+
+        <div class="section-title">
+          🎧 <b>Voice Preview</b>
+        </div>
+
+        <audio
+          id="audio"
+          controls
+        ></audio>
+
+        <a
+          id="download"
+          class="download"
+          download="ai-voice-pro-v3.mp3"
+        >
+          ⬇️ Download MP3
+        </a>
+
+      </section>
+
+    </section>
+
+
+    <!-- SCRIPT TOOLS -->
+
+    <section
+      id="script_section"
+      class="hidden"
+    >
+
+      <div class="card">
+
+        <div class="section-title">
+          ✨ <b>AI Script</b>
+        </div>
+
+        <p class="hint">
+          Topic से Shorts script तैयार करने के लिए।
+        </p>
+
+        <textarea
+          id="script_topic"
+          placeholder="उदाहरण: अंतरिक्ष के 5 रोचक तथ्य"
+        ></textarea>
+
+        <button
+          id="script_generate"
+          class="generate"
+        >
+          ✨ Generate Script
+        </button>
+
+      </div>
+
+
+      <div class="card">
+
+        <div class="section-title">
+          🧹 <b>Clean Script</b>
+        </div>
+
+        <textarea
+          id="clean_text"
+          placeholder="अपनी rough script यहाँ डालें..."
+        ></textarea>
+
+        <button
+          id="clean_script"
+          class="preview-btn"
+        >
+          🧹 Clean Script
+        </button>
+
+      </div>
+
+
+      <div
+        id="script_result"
+        class="card hidden"
+      >
+
+        <div class="section-title">
+          📝 <b>Result</b>
+        </div>
+
+        <textarea
+          id="script_output"
+        ></textarea>
+
+        <button
+          id="use_script"
+          class="generate"
+        >
+          🎙️ Use in Voice Studio
+        </button>
+
+      </div>
+
+    </section>
+
+
+    <!-- HISTORY -->
+
+    <section
+      id="history_section"
+      class="hidden"
+    >
+
+      <div class="card">
+
+        <div class="section-title">
+          🕘 <b>Voice History</b>
+        </div>
+
+        <div id="history_list"></div>
+
+      </div>
+
+    </section>
+
+
+    <!-- SETTINGS -->
+
+    <section
+      id="settings_section"
+      class="hidden"
+    >
+
+      <div class="card">
+
+        <div class="section-title">
+          ⚙️ <b>Settings</b>
+        </div>
+
+        <p class="hint">
+          AI Voice Studio PRO V3
+        </p>
+
+        <p class="hint">
+          API key browser में नहीं आती। Azure key server-side सुरक्षित रहती है।
+        </p>
+
+        <p class="hint">
+          Personal Creator Edition
+        </p>
+
+      </div>
+
+    </section>
+
+
+    <footer>
+      🔐 Server-side API • F0 Safe Mode • Personal Creator Edition
+    </footer>
+
+  </main>
+
+
+  <!-- USAGE MODAL -->
+
+  <div
+    id="usage_modal"
+    class="modal"
+  >
+
+    <div class="modal-box">
+
+      <div class="modal-head">
+
+        <h3>
+          📊 Usage Details
+        </h3>
+
+        <button
+          id="usage_close"
+          class="modal-close"
+        >
+          ×
+        </button>
+
+      </div>
+
+
+      <p>
+        Today's Characters
+      </p>
+
+      <div class="usage-bar">
+        <div
+          id="usage_fill"
+          class="usage-fill"
+        ></div>
+      </div>
+
+
+      <div class="usage-info">
+
+        <b>
+          Used
+        </b>
+
+        <small id="usage_used">
+          0 characters
+        </small>
+
+      </div>
+
+
+      <br>
+
+
+      <div class="usage-info">
+
+        <b>
+          Remaining
+        </b>
+
+        <small id="usage_remaining">
+          App limit not configured
+        </small>
+
+      </div>
+
+
+      <br>
+
+
+      <div class="usage-info">
+
+        <b>
+          Voices Generated
+        </b>
+
+        <small id="usage_generations">
+          0
+        </small>
+
+      </div>
+
+
+      <br>
+
+
+      <div class="usage-info">
+
+        <b>
+          Last Generation
+        </b>
+
+        <small id="usage_last">
+          अभी कोई generation नहीं
+        </small>
+
+      </div>
+
+
+      <p class="hint">
+        यह App Usage counter है। इसे Azure की वास्तविक remaining quota न समझें।
       </p>
 
     </div>
 
   </div>
 
-</div>
-
-
-<main id="main">
-
-
-<!-- DASHBOARD -->
-
-<section id="page-dashboard" class="page active">
-
-  <div class="hero-card">
-
-    <span class="pro-badge">● PRO V3</span>
-
-    <h1>Professional Hindi Voice</h1>
-
-    <p>
-      YouTube Shorts के लिए natural और professional
-      Hindi voice-over बनाएं।
-    </p>
-
-    <button class="primary big" data-open="voice">
-      🎙️ Create Voice
-    </button>
-
-  </div>
-
-
-  <div class="section-heading">
-    <strong>Quick Tools</strong>
-    <small>जरूरत के अनुसार चुनें</small>
-  </div>
-
-
-  <div class="quick-grid">
-
-    <button class="tool-card" data-open="voice">
-      <span>🎙️</span>
-      <b>Voice Studio</b>
-      <small>Script → Voice</small>
-    </button>
-
-    <button class="tool-card" data-open="script">
-      <span>✨</span>
-      <b>AI Script</b>
-      <small>Topic → Script</small>
-    </button>
-
-    <button class="tool-card" data-open="script">
-      <span>🧹</span>
-      <b>Clean Script</b>
-      <small>Make it voice-ready</small>
-    </button>
-
-    <button class="tool-card" data-open="history">
-      <span>🕘</span>
-      <b>History</b>
-      <small>Recent voices</small>
-    </button>
-
-  </div>
-
-
-  <div class="usage-card" id="dashboardUsage">
-
-    <div>
-      <span>📊 Usage</span>
-      <small>Today's app usage</small>
-    </div>
-
-    <strong id="dashUsage">0%</strong>
-
-  </div>
-
-</section>
-
-
-<!-- VOICE STUDIO -->
-
-<section id="page-voice" class="page">
-
-  <div class="page-title">
-    <div>
-      <span>🎙️</span>
-      <h2>Voice Studio</h2>
-      <p>Script को professional Hindi voice में बदलें।</p>
-    </div>
-  </div>
-
-
-  <div class="card">
-
-    <div class="section-title">
-      📝 <b>Script</b>
-    </div>
-
-    <textarea
-      id="text"
-      maxlength="12000"
-      placeholder="अपना Hindi script यहाँ लिखें..."
-    ></textarea>
-
-    <div class="between">
-
-      <span id="count">0 / 12000</span>
-
-      <button id="clear" class="small">
-        Clear
-      </button>
-
-    </div>
-
-  </div>
-
-
-  <div class="card">
-
-    <div class="section-title">
-      🎬 <b>YouTube Voice Preset</b>
-    </div>
-
-    <select id="preset">
-
-      <option value="custom">⚙️ Custom</option>
-      <option value="viral_fact">🔥 Viral Fact</option>
-      <option value="news">📰 News</option>
-      <option value="mystery">😱 Mystery</option>
-      <option value="story">📖 Storytelling</option>
-      <option value="education">🎓 Education</option>
-      <option value="emotional">❤️ Emotional</option>
-      <option value="motivation">💪 Motivation</option>
-      <option value="funny">😂 Funny</option>
-
-    </select>
-
-    <p class="hint">
-      Preset voice delivery को automatically optimize करेगा।
-    </p>
-
-  </div>
-
-
-  <div class="card">
-
-    <div class="section-title">
-      🎙️ <b>Voice</b>
-    </div>
-
-    <select id="voice"></select>
-
-    <div class="voice-personality">
-      <span>Voice personality</span>
-      <small id="voiceHint">
-        Natural Hindi narration
-      </small>
-    </div>
-
-  </div>
-
-
-  <div class="card">
-
-    <div class="section-title">
-      🤖 <b>Smart Controls</b>
-    </div>
-
-
-    <div class="toggle-list">
-
-      <label class="toggle-item">
-        <span>
-          <b>Auto Voice Director</b>
-          <small>Delivery को script के अनुसार adjust करें</small>
-        </span>
-
-        <input id="auto_director" type="checkbox" checked>
-      </label>
-
-
-      <label class="toggle-item">
-        <span>
-          <b>Auto Emotion</b>
-          <small>Sentence mood को detect करें</small>
-        </span>
-
-        <input id="auto_emotion" type="checkbox" checked>
-      </label>
-
-
-      <label class="toggle-item">
-        <span>
-          <b>Natural Pause</b>
-          <small>Natural sentence pauses</small>
-        </span>
-
-        <input id="auto_pause" type="checkbox" checked>
-      </label>
-
-
-      <label class="toggle-item">
-        <span>
-          <b>Smart Pronunciation</b>
-          <small>AI, YouTube, 5G, ₹, % आदि</small>
-        </span>
-
-        <input id="pronunciation" type="checkbox" checked>
-      </label>
-
-    </div>
-
-  </div>
-
-
-  <div class="card">
-
-    <div class="section-title">
-      🔊 <b>Voice Boost</b>
-    </div>
-
-    <div class="boost-options">
-
-      <button class="boost active" data-boost="0">
-        Normal
-      </button>
-
-      <button class="boost" data-boost="5">
-        +5% Recommended
-      </button>
-
-      <button class="boost" data-boost="10">
-        +10% Loud
-      </button>
-
-      <button class="boost" data-boost="15">
-        +15% Max
-      </button>
-
-    </div>
-
-    <input id="volumeBoost" type="hidden" value="0">
-
-  </div>
-
-
-  <div class="card">
-
-    <button id="advancedBtn" class="advanced-btn">
-      🎚️ Advanced Voice Controls
-      <span>＋</span>
-    </button>
-
-    <div id="advancedControls" class="hidden advanced-content">
-
-      <div class="control">
-
-        <label>
-          Speed
-          <b id="rv">0%</b>
-        </label>
-
-        <div class="stepper">
-          <button data-step="rate" data-change="-1">−</button>
-          <strong id="rateValue">0%</strong>
-          <button data-step="rate" data-change="1">+</button>
-        </div>
-
-        <input id="rate" type="hidden" value="0">
-
-      </div>
-
-
-      <div class="control">
-
-        <label>
-          Pitch
-          <b id="pv">0%</b>
-        </label>
-
-        <div class="stepper">
-          <button data-step="pitch" data-change="-1">−</button>
-          <strong id="pitchValue">0%</strong>
-          <button data-step="pitch" data-change="1">+</button>
-        </div>
-
-        <input id="pitch" type="hidden" value="0">
-
-      </div>
-
-
-      <div class="control">
-
-        <label>
-          Volume
-          <b id="vv">0%</b>
-        </label>
-
-        <div class="stepper">
-          <button data-step="volume" data-change="-1">−</button>
-          <strong id="volumeValue">0%</strong>
-          <button data-step="volume" data-change="1">+</button>
-        </div>
-
-        <input id="volume" type="hidden" value="0">
-
-      </div>
-
-    </div>
-
-  </div>
-
-
-  <div class="preview-row">
-
-    <button id="preview" class="secondary">
-      ▶️ Quick Preview
-    </button>
-
-    <button id="generate" class="primary">
-      🎧 Generate Voice
-    </button>
-
-  </div>
-
-  <p id="status"></p>
-
-
-  <section id="out" class="card hidden">
-
-    <div class="section-title">
-      🎧 <b>Voice Preview</b>
-    </div>
-
-    <audio id="audio" controls></audio>
-
-    <a
-      id="download"
-      download="ai-voice-pro-v3.mp3"
-    >
-      ⬇️ Download MP3
-    </a>
-
-  </section>
-
-</section>
-
-
-<!-- SCRIPT TOOLS -->
-
-<section id="page-script" class="page">
-
-  <div class="page-title">
-    <div>
-      <span>📝</span>
-      <h2>Script Tools</h2>
-      <p>Voice-over के लिए script तैयार करें।</p>
-    </div>
-  </div>
-
-
-  <div class="card">
-
-    <div class="section-title">
-      ✨ <b>AI Script</b>
-    </div>
-
-    <input
-      id="scriptTopic"
-      class="text-input"
-      placeholder="Topic लिखें..."
-    >
-
-    <select id="scriptType">
-
-      <option>🔥 Viral Fact</option>
-      <option>🎓 Education</option>
-      <option>😱 Mystery</option>
-      <option>📖 Story</option>
-      <option>💪 Motivation</option>
-
-    </select>
-
-    <select id="scriptLength">
-
-      <option value="30">30 Seconds</option>
-      <option value="45">45 Seconds</option>
-      <option value="60">60 Seconds</option>
-
-    </select>
-
-    <button id="generateScript" class="primary">
-      ✨ Generate Script
-    </button>
-
-    <textarea
-      id="scriptResult"
-      class="script-result"
-      placeholder="Generated script यहाँ दिखाई देगी..."
-    ></textarea>
-
-    <button id="useScript" class="secondary">
-      🎙️ Use in Voice Studio
-    </button>
-
-  </div>
-
-
-  <div class="card">
-
-    <div class="section-title">
-      🧹 <b>Clean Script</b>
-    </div>
-
-    <textarea
-      id="cleanInput"
-      placeholder="अपनी rough script यहाँ डालें..."
-    ></textarea>
-
-    <button id="cleanScript" class="primary">
-      🧹 Clean Script
-    </button>
-
-    <textarea
-      id="cleanResult"
-      class="script-result"
-      placeholder="Cleaned script यहाँ दिखाई देगी..."
-    ></textarea>
-
-    <button id="useCleanScript" class="secondary">
-      🎙️ Use in Voice Studio
-    </button>
-
-  </div>
-
-</section>
-
-
-<!-- HISTORY -->
-
-<section id="page-history" class="page">
-
-  <div class="page-title">
-    <div>
-      <span>🕘</span>
-      <h2>History</h2>
-      <p>आपके हाल के generated voices।</p>
-    </div>
-  </div>
-
-  <div id="historyList" class="history-list">
-
-    <div class="empty-state">
-      🕘<br>
-      अभी कोई voice history नहीं है।
-    </div>
-
-  </div>
-
-</section>
-
-
-<!-- USAGE PAGE -->
-
-<section id="page-usage" class="page">
-
-  <div class="page-title">
-    <div>
-      <span>📊</span>
-      <h2>Usage</h2>
-      <p>आपके app usage की जानकारी।</p>
-    </div>
-  </div>
-
-  <div class="card usage-large">
-
-    <div class="usage-title">
-      <b>Today's Usage</b>
-      <strong id="pageUsagePercent">0%</strong>
-    </div>
-
-    <div class="progress">
-      <i id="pageUsageProgress"></i>
-    </div>
-
-    <div class="usage-big-grid">
-
-      <div>
-        <small>Characters Used</small>
-        <strong id="pageUsedChars">0</strong>
-      </div>
-
-      <div>
-        <small>Remaining</small>
-        <strong id="pageRemainingChars">—</strong>
-      </div>
-
-      <div>
-        <small>Generated Voices</small>
-        <strong id="pageGeneratedCount">0</strong>
-      </div>
-
-      <div>
-        <small>Last Generation</small>
-        <strong id="pageLastGeneration">—</strong>
-      </div>
-
-    </div>
-
-    <p class="usage-note">
-      यह app-level usage counter है। Azure की वास्तविक quota
-      इससे अलग हो सकती है।
-    </p>
-
-  </div>
-
-</section>
-
-
-<!-- SETTINGS -->
-
-<section id="page-settings" class="page">
-
-  <div class="page-title">
-    <div>
-      <span>⚙️</span>
-      <h2>Settings</h2>
-      <p>Personal Voice Studio settings।</p>
-    </div>
-  </div>
-
-
-  <div class="card settings-list">
-
-    <div>
-      <b>🔐 API Security</b>
-      <small>Azure API key server-side सुरक्षित है।</small>
-    </div>
-
-    <div>
-      <b>🛡️ Safe Mode</b>
-      <small>F0-friendly usage controls enabled.</small>
-    </div>
-
-    <div>
-      <b>🎙️ Default Voice</b>
-      <small>Voice Studio में अपनी पसंद की voice चुनें।</small>
-    </div>
-
-  </div>
-
-</section>
-
-</main>
-
-
-<footer>
-  AI Voice Studio PRO V3 • Personal Creator Edition
-</footer>
-
-</div>
 
 <script src="/static/app.js"></script>
 
+</div>
+
 </body>
-                                </html>
+  </html>
