@@ -1,9 +1,9 @@
 const $ = id => document.getElementById(id);
 
 
-/* =========================
+/* =========================================================
    PRESETS
-========================= */
+========================================================= */
 
 const PRESETS = {
 
@@ -64,9 +64,9 @@ const PRESETS = {
 };
 
 
-/* =========================
+/* =========================================================
    STATE
-========================= */
+========================================================= */
 
 let rateValue = 0;
 let pitchValue = 0;
@@ -75,9 +75,9 @@ let volumeValue = 0;
 let currentAudioUrl = null;
 
 
-/* =========================
+/* =========================================================
    STATUS
-========================= */
+========================================================= */
 
 function setStatus(message,className=""){
 
@@ -91,9 +91,9 @@ function setStatus(message,className=""){
 }
 
 
-/* =========================
+/* =========================================================
    SIDEBAR
-========================= */
+========================================================= */
 
 function openSidebar(){
 
@@ -129,19 +129,22 @@ $("overlay")?.addEventListener(
 );
 
 
-/* =========================
+/* =========================================================
    SECTION SWITCHING
-========================= */
+========================================================= */
 
 function showSection(section){
 
   const sections = [
+
     "dashboard_section",
     "voice_section",
     "script_section",
     "history_section",
     "settings_section"
+
   ];
+
 
   sections.forEach(id=>{
 
@@ -151,24 +154,46 @@ function showSection(section){
 
 
   if(section==="dashboard"){
-    $("dashboard_section")?.classList.remove("hidden");
+
+    $("dashboard_section")
+      ?.classList.remove("hidden");
+
   }
+
 
   if(section==="voice"){
-    $("voice_section")?.classList.remove("hidden");
+
+    $("voice_section")
+      ?.classList.remove("hidden");
+
   }
+
 
   if(section==="script"){
-    $("script_section")?.classList.remove("hidden");
+
+    $("script_section")
+      ?.classList.remove("hidden");
+
   }
+
 
   if(section==="history"){
-    $("history_section")?.classList.remove("hidden");
+
+    $("history_section")
+      ?.classList.remove("hidden");
+
     renderHistory();
+
   }
 
+
   if(section==="settings"){
-    $("settings_section")?.classList.remove("hidden");
+
+    $("settings_section")
+      ?.classList.remove("hidden");
+
+    fillSettingsForm();
+
   }
 
 
@@ -177,14 +202,19 @@ function showSection(section){
   ).forEach(button=>{
 
     button.classList.toggle(
+
       "active",
-      button.dataset.section===section
+
+      button.dataset.section === section
+
     );
 
   });
 
 }
 
+
+/* NAV BUTTONS */
 
 document.querySelectorAll(
   ".nav button[data-section]"
@@ -206,38 +236,49 @@ document.querySelectorAll(
 });
 
 
+/* HISTORY */
+
 $("history_nav")?.addEventListener(
   "click",
   ()=>{
 
     showSection("history");
+
     closeSidebar();
 
   }
 );
 
+
+/* USAGE */
 
 $("usage_nav")?.addEventListener(
   "click",
   ()=>{
 
     openUsage();
+
     closeSidebar();
 
   }
 );
 
+
+/* SETTINGS */
 
 $("settings_nav")?.addEventListener(
   "click",
   ()=>{
 
     showSection("settings");
+
     closeSidebar();
 
   }
 );
 
+
+/* DASHBOARD CARDS */
 
 document.querySelectorAll(
   "[data-open]"
@@ -257,38 +298,54 @@ document.querySelectorAll(
 });
 
 
-/* =========================
+/* =========================================================
    SCRIPT COUNTER
-========================= */
+========================================================= */
 
 $("text")?.addEventListener(
   "input",
   ()=>{
 
-    $("count").textContent =
-      $("text").value.length +
-      " / 12000";
+    const value =
+      $("text").value.length;
+
+    if($("count")){
+
+      $("count").textContent =
+        value + " / 12000";
+
+    }
 
   }
 );
 
 
-/* =========================
+/* =========================================================
    CLEAR
-========================= */
+========================================================= */
 
 $("clear")?.addEventListener(
   "click",
   ()=>{
 
-    $("text").value = "";
+    if($("text")){
 
-    $("count").textContent =
-      "0 / 12000";
+      $("text").value = "";
 
-    $("out")?.classList.add(
-      "hidden"
-    );
+    }
+
+
+    if($("count")){
+
+      $("count").textContent =
+        "0 / 12000";
+
+    }
+
+
+    $("out")
+      ?.classList.add("hidden");
+
 
     setStatus("");
 
@@ -296,9 +353,9 @@ $("clear")?.addEventListener(
 );
 
 
-/* =========================
+/* =========================================================
    PRESET
-========================= */
+========================================================= */
 
 function applyPreset(){
 
@@ -309,12 +366,6 @@ function applyPreset(){
     PRESETS[presetName];
 
   if(!preset) return;
-
-
-  if($("style")){
-    $("style").value =
-      preset.style;
-  }
 
 
   rateValue =
@@ -335,16 +386,16 @@ $("preset")?.addEventListener(
 );
 
 
-/* =========================
-   VALUE CONTROLS
-========================= */
+/* =========================================================
+   VOICE CONTROLS
+========================================================= */
 
 function updateControls(){
 
   if($("rate_value")){
 
     $("rate_value").textContent =
-      (rateValue>0 ? "+" : "") +
+      (rateValue > 0 ? "+" : "") +
       rateValue +
       "%";
 
@@ -354,7 +405,7 @@ function updateControls(){
   if($("pitch_value")){
 
     $("pitch_value").textContent =
-      (pitchValue>0 ? "+" : "") +
+      (pitchValue > 0 ? "+" : "") +
       pitchValue +
       "%";
 
@@ -364,7 +415,7 @@ function updateControls(){
   if($("volume_value")){
 
     $("volume_value").textContent =
-      (volumeValue>0 ? "+" : "") +
+      (volumeValue > 0 ? "+" : "") +
       volumeValue +
       "%";
 
@@ -382,7 +433,7 @@ $("rate_minus")?.addEventListener(
     rateValue =
       Math.max(
         -30,
-        rateValue-1
+        rateValue - 1
       );
 
     updateControls();
@@ -398,7 +449,7 @@ $("rate_plus")?.addEventListener(
     rateValue =
       Math.min(
         30,
-        rateValue+1
+        rateValue + 1
       );
 
     updateControls();
@@ -416,7 +467,7 @@ $("pitch_minus")?.addEventListener(
     pitchValue =
       Math.max(
         -20,
-        pitchValue-1
+        pitchValue - 1
       );
 
     updateControls();
@@ -432,7 +483,7 @@ $("pitch_plus")?.addEventListener(
     pitchValue =
       Math.min(
         20,
-        pitchValue+1
+        pitchValue + 1
       );
 
     updateControls();
@@ -450,7 +501,7 @@ $("volume_minus")?.addEventListener(
     volumeValue =
       Math.max(
         -20,
-        volumeValue-1
+        volumeValue - 1
       );
 
     updateControls();
@@ -466,7 +517,7 @@ $("volume_plus")?.addEventListener(
     volumeValue =
       Math.min(
         20,
-        volumeValue+1
+        volumeValue + 1
       );
 
     updateControls();
@@ -475,9 +526,9 @@ $("volume_plus")?.addEventListener(
 );
 
 
-/* =========================
+/* =========================================================
    VOICE BOOST
-========================= */
+========================================================= */
 
 document.querySelectorAll(
   ".boost-btn"
@@ -517,9 +568,9 @@ document.querySelectorAll(
 });
 
 
-/* =========================
+/* =========================================================
    ADVANCED
-========================= */
+========================================================= */
 
 $("advanced_toggle")?.addEventListener(
   "click",
@@ -534,9 +585,9 @@ $("advanced_toggle")?.addEventListener(
 );
 
 
-/* =========================
+/* =========================================================
    USAGE
-========================= */
+========================================================= */
 
 const USAGE_LIMIT = 10000;
 
@@ -566,14 +617,18 @@ function loadUsage(){
       const parsed =
         JSON.parse(saved);
 
+
       if(
         parsed &&
         typeof parsed === "object"
       ){
 
         usage = {
+
           ...usage,
+
           ...parsed
+
         };
 
       }
@@ -600,8 +655,11 @@ function saveUsage(){
   try{
 
     localStorage.setItem(
+
       "ai_voice_v3_usage",
+
       JSON.stringify(usage)
+
     );
 
   }catch(error){
@@ -619,15 +677,20 @@ function saveUsage(){
 function updateUsage(){
 
   const used =
-    usage.todayCharacters;
+    Number(
+      usage.todayCharacters || 0
+    );
 
 
   const percent =
     Math.min(
+
       100,
+
       Math.round(
-        (used/USAGE_LIMIT)*100
+        (used / USAGE_LIMIT) * 100
       )
+
     );
 
 
@@ -642,7 +705,9 @@ function updateUsage(){
   if($("usage_summary")){
 
     $("usage_summary").textContent =
+
       used.toLocaleString("en-IN") +
+
       " characters used today";
 
   }
@@ -651,7 +716,9 @@ function updateUsage(){
   if($("usage_used")){
 
     $("usage_used").textContent =
+
       used.toLocaleString("en-IN") +
+
       " characters";
 
   }
@@ -660,10 +727,12 @@ function updateUsage(){
   if($("usage_remaining")){
 
     $("usage_remaining").textContent =
+
       Math.max(
         0,
-        USAGE_LIMIT-used
+        USAGE_LIMIT - used
       ).toLocaleString("en-IN") +
+
       " characters";
 
   }
@@ -672,7 +741,7 @@ function updateUsage(){
   if($("usage_generations")){
 
     $("usage_generations").textContent =
-      usage.todayGenerations;
+      usage.todayGenerations || 0;
 
   }
 
@@ -680,7 +749,9 @@ function updateUsage(){
   if($("usage_last")){
 
     $("usage_last").textContent =
+
       usage.lastGeneration ||
+
       "अभी कोई generation नहीं";
 
   }
@@ -697,9 +768,7 @@ function updateUsage(){
   if($("usage_mini")){
 
     $("usage_mini").textContent =
-      "📊 Usage " +
-      percent +
-      "%";
+      "📊 Usage " + percent + "%";
 
   }
 
@@ -755,13 +824,11 @@ $("usage_modal")?.addEventListener(
 );
 
 
-/* =========================
+/* =========================================================
    VOICE LIBRARY
-========================= */
+========================================================= */
 
-function renderVoiceLibrary(
-  voices
-){
+function renderVoiceLibrary(voices){
 
   const container =
     $("voice_library");
@@ -781,6 +848,7 @@ function renderVoiceLibrary(
         document.createElement(
           "div"
         );
+
 
       card.className =
         "voice-card";
@@ -807,7 +875,7 @@ function renderVoiceLibrary(
         <div class="voice-info">
 
           <b>
-            ${voice.label}
+            ${escapeHTML(voice.label)}
           </b>
 
           <small>
@@ -815,14 +883,6 @@ function renderVoiceLibrary(
           </small>
 
         </div>
-
-        <button
-          class="voice-preview"
-          data-voice="${key}"
-          type="button"
-        >
-          ▶
-        </button>
 
       `;
 
@@ -834,53 +894,20 @@ function renderVoiceLibrary(
 
       card.addEventListener(
         "click",
-        event=>{
-
-          if(
-            event.target.closest(
-              ".voice-preview"
-            )
-          ){
-
-            return;
-
-          }
-
-
+        ()=>{
           selectVoice(key);
-
         }
       );
 
     }
   );
 
-
-  document.querySelectorAll(
-    ".voice-preview"
-  ).forEach(button=>{
-
-    button.addEventListener(
-      "click",
-      event=>{
-
-        event.stopPropagation();
-
-        previewVoice(
-          button.dataset.voice
-        );
-
-      }
-    );
-
-  });
-
 }
 
 
-function selectVoice(
-  voice
-){
+/* SELECT VOICE */
+
+function selectVoice(voice){
 
   if($("voice")){
 
@@ -895,8 +922,11 @@ function selectVoice(
   ).forEach(card=>{
 
     card.classList.toggle(
+
       "selected",
-      card.dataset.voice===voice
+
+      card.dataset.voice === voice
+
     );
 
   });
@@ -904,17 +934,18 @@ function selectVoice(
 }
 
 
-/* =========================
-   PREVIEW VOICE
-========================= */
+/* =========================================================
+   VOICE PREVIEW
+========================================================= */
 
-async function previewVoice(
-  voice
-){
+async function previewVoice(voice){
 
   setStatus(
+
     "⏳ Voice preview बनाई जा रही है...",
+
     "loading"
+
   );
 
 
@@ -922,7 +953,7 @@ async function previewVoice(
 
     const response =
       await fetch(
-        "/api/tts",
+        "/api/preview",
         {
 
           method:"POST",
@@ -970,62 +1001,53 @@ async function previewVoice(
     if(!response.ok){
 
       throw new Error(
+
         data.detail ||
         "Preview failed"
+
       );
 
     }
 
 
-    const bytes =
-      Uint8Array.from(
-        atob(
-          data.audio_base64
-        ),
-        character =>
-          character.charCodeAt(0)
-      );
-
-
-    const url =
-      URL.createObjectURL(
-        new Blob(
-          [bytes],
-          {
-            type:
-              data.mime ||
-              "audio/mpeg"
-          }
-        )
+    const audioUrl =
+      base64ToBlobUrl(
+        data.audio_base64,
+        data.mime || "audio/mpeg"
       );
 
 
     if($("preview_audio")){
 
       $("preview_audio")
-        .classList.remove(
-          "hidden"
-        );
+        .classList.remove("hidden");
 
       $("preview_audio").src =
-        url;
+        audioUrl;
 
-      $("preview_audio").play();
+      $("preview_audio").play()
+        .catch(()=>{});
 
     }
 
 
     setStatus(
+
       "▶️ Voice preview तैयार है।",
+
       "success"
+
     );
 
 
   }catch(error){
 
     setStatus(
+
       "❌ " + error.message,
+
       "error"
+
     );
 
   }
@@ -1033,289 +1055,145 @@ async function previewVoice(
 }
 
 
-/* =========================
+/* SELECTED VOICE PREVIEW */
+
+$("selected_voice_preview")?.addEventListener(
+  "click",
+  ()=>{
+
+    const voice =
+      $("voice")?.value ||
+      "arjun";
+
+
+    previewVoice(
+      voice
+    );
+
+  }
+);
+
+
+/* =========================================================
+   BASE64 AUDIO
+========================================================= */
+
+function base64ToBlobUrl(
+  base64,
+  mime
+){
+
+  const bytes =
+    Uint8Array.from(
+
+      atob(base64),
+
+      character =>
+        character.charCodeAt(0)
+
+    );
+
+
+  return URL.createObjectURL(
+
+    new Blob(
+      [bytes],
+      {
+        type:mime
+      }
+    )
+
+  );
+
+}
+
+
+/* =========================================================
    FULL GENERATE
-========================= */
+========================================================= */
 
 $("generate")?.addEventListener(
   "click",
-  async ()=>{
-
-    const text =
-      $("text")?.value.trim() ||
-      "";
+  generateVoice
+);
 
 
-    if(!text){
+async function generateVoice(){
 
-      setStatus(
-        "⚠️ पहले script लिखें।",
-        "error"
-      );
-
-      return;
-
-    }
+  const text =
+    $("text")?.value.trim() ||
+    "";
 
 
-    if(text.length>12000){
-
-      setStatus(
-        "⚠️ Script 12000 characters से ज्यादा है।",
-        "error"
-      );
-
-      return;
-
-    }
-
-
-    if(
-      usage.todayCharacters +
-      text.length >
-      USAGE_LIMIT
-    ){
-
-      setStatus(
-        "⚠️ App usage limit पूरी हो गई है।",
-        "error"
-      );
-
-      return;
-
-    }
-
-
-    const generate =
-      $("generate");
-
-
-    generate.disabled =
-      true;
-
+  if(!text){
 
     setStatus(
-      "⏳ Professional voice बनाई जा रही है...",
-      "loading"
+
+      "⚠️ पहले script लिखें।",
+
+      "error"
+
     );
 
-
-    try{
-
-      const response =
-        await fetch(
-          "/api/tts",
-          {
-
-            method:"POST",
-
-            headers:{
-              "Content-Type":
-                "application/json"
-            },
-
-            body:JSON.stringify({
-
-              text:text,
-
-              voice:
-                $("voice")?.value ||
-                "arjun",
-
-              style:
-                $("style")?.value ||
-                "neutral",
-
-              preset:
-                $("preset")?.value ||
-                "custom",
-
-              rate:rateValue,
-
-              pitch:pitchValue,
-
-              volume:volumeValue,
-
-              auto_director:
-                $("auto_director")?.checked ??
-                true,
-
-              auto_emotion:
-                $("auto_emotion")?.checked ??
-                true,
-
-              auto_pause:
-                $("auto_pause")?.checked ??
-                true,
-
-              pronunciation:
-                $("pronunciation")?.checked ??
-                true
-
-            })
-
-          }
-        );
-
-
-      const data =
-        await response.json();
-
-
-      if(!response.ok){
-
-        throw new Error(
-          data.detail ||
-          "Voice generation failed"
-        );
-
-      }
-
-
-      const bytes =
-        Uint8Array.from(
-          atob(
-            data.audio_base64
-          ),
-          character =>
-            character.charCodeAt(0)
-        );
-
-
-      currentAudioUrl =
-        URL.createObjectURL(
-
-          new Blob(
-            [bytes],
-            {
-              type:
-                data.mime ||
-                "audio/mpeg"
-            }
-          )
-
-        );
-
-
-      if($("audio")){
-
-        $("audio").src =
-          currentAudioUrl;
-
-      }
-
-
-      if($("download")){
-
-        $("download").href =
-          currentAudioUrl;
-
-      }
-
-
-      $("out")
-        ?.classList.remove(
-          "hidden"
-        );
-
-
-      /* USAGE */
-
-      usage.todayCharacters +=
-        text.length;
-
-
-      usage.todayGenerations +=
-        1;
-
-
-      usage.lastGeneration =
-        new Date().toLocaleString(
-          "hi-IN"
-        );
-
-
-      saveUsage();
-      updateUsage();
-
-
-      /* HISTORY */
-
-      saveHistory(text);
-
-
-      setStatus(
-        "✅ PRO V3 Voice तैयार है!",
-        "success"
-      );
-
-
-    }catch(error){
-
-      setStatus(
-        "❌ " + error.message,
-        "error"
-      );
-
-    }finally{
-
-      generate.disabled =
-        false;
-
-    }
+    return;
 
   }
-);
 
 
-/* =========================
-   QUICK PREVIEW
-========================= */
+  if(text.length > 12000){
 
-$("preview")?.addEventListener(
-  "click",
-  async ()=>{
+    setStatus(
 
-    const text =
-      $("text")?.value.trim() ||
-      "";
+      "⚠️ Script 12000 characters से ज्यादा है।",
 
+      "error"
 
-    if(!text){
-
-      setStatus(
-        "⚠️ पहले script लिखें।",
-        "error"
-      );
-
-      return;
-
-    }
-
-
-    const previewText =
-      text
-        .split(/[।!?]/)
-        .filter(Boolean)
-        .slice(0,2)
-        .join("।");
-
-
-    await generatePreviewFromScript(
-      previewText
     );
 
+    return;
+
   }
-);
 
 
-async function generatePreviewFromScript(
-  text
-){
+  if(
+
+    usage.todayCharacters +
+    text.length >
+    USAGE_LIMIT
+
+  ){
+
+    setStatus(
+
+      "⚠️ App usage limit पूरी हो गई है।",
+
+      "error"
+
+    );
+
+    return;
+
+  }
+
+
+  const button =
+    $("generate");
+
+
+  if(button){
+
+    button.disabled =
+      true;
+
+  }
+
 
   setStatus(
-    "⏳ Quick Preview बनाई जा रही है...",
+
+    "⏳ Professional voice बनाई जा रही है...",
+
     "loading"
+
   );
 
 
@@ -1323,14 +1201,18 @@ async function generatePreviewFromScript(
 
     const response =
       await fetch(
+
         "/api/tts",
+
         {
 
           method:"POST",
 
           headers:{
+
             "Content-Type":
               "application/json"
+
           },
 
           body:JSON.stringify({
@@ -1349,11 +1231,14 @@ async function generatePreviewFromScript(
               $("preset")?.value ||
               "custom",
 
-            rate:rateValue,
+            rate:
+              rateValue,
 
-            pitch:pitchValue,
+            pitch:
+              pitchValue,
 
-            volume:volumeValue,
+            volume:
+              volumeValue,
 
             auto_director:
               $("auto_director")?.checked ??
@@ -1374,6 +1259,7 @@ async function generatePreviewFromScript(
           })
 
         }
+
       );
 
 
@@ -1384,34 +1270,269 @@ async function generatePreviewFromScript(
     if(!response.ok){
 
       throw new Error(
+
         data.detail ||
-        "Preview failed"
+        "Voice generation failed"
+
       );
 
     }
 
 
-    const bytes =
-      Uint8Array.from(
-        atob(
-          data.audio_base64
-        ),
-        character =>
-          character.charCodeAt(0)
+    if(currentAudioUrl){
+
+      URL.revokeObjectURL(
+        currentAudioUrl
+      );
+
+    }
+
+
+    currentAudioUrl =
+      base64ToBlobUrl(
+
+        data.audio_base64,
+
+        data.mime ||
+        "audio/mpeg"
+
       );
 
 
-    const url =
-      URL.createObjectURL(
+    if($("audio")){
 
-        new Blob(
-          [bytes],
-          {
-            type:
-              data.mime ||
-              "audio/mpeg"
-          }
-        )
+      $("audio").src =
+        currentAudioUrl;
+
+    }
+
+
+    if($("download")){
+
+      $("download").href =
+        currentAudioUrl;
+
+      $("download").download =
+        "ai-voice-pro-v3.mp3";
+
+    }
+
+
+    $("out")
+      ?.classList.remove("hidden");
+
+
+    /* USAGE */
+
+    const actualCharacters =
+      Number(
+        data.characters ||
+        text.length
+      );
+
+
+    usage.todayCharacters +=
+      actualCharacters;
+
+
+    usage.todayGenerations +=
+      1;
+
+
+    usage.lastGeneration =
+      new Date().toLocaleString(
+        "hi-IN"
+      );
+
+
+    saveUsage();
+
+    updateUsage();
+
+
+    /* HISTORY */
+
+    saveHistory(text);
+
+
+    setStatus(
+
+      "✅ PRO V3 Voice तैयार है!",
+
+      "success"
+
+    );
+
+
+  }catch(error){
+
+    setStatus(
+
+      "❌ " + error.message,
+
+      "error"
+
+    );
+
+  }finally{
+
+    if(button){
+
+      button.disabled =
+        false;
+
+    }
+
+  }
+
+}
+
+
+/* =========================================================
+   QUICK PREVIEW
+========================================================= */
+
+$("preview")?.addEventListener(
+  "click",
+  async ()=>{
+
+    const text =
+      $("text")?.value.trim() ||
+      "";
+
+
+    if(!text){
+
+      setStatus(
+
+        "⚠️ पहले script लिखें।",
+
+        "error"
+
+      );
+
+      return;
+
+    }
+
+
+    const previewText =
+
+      text
+        .split(/[।!?]/)
+        .filter(Boolean)
+        .slice(0,2)
+        .join("।");
+
+
+    await generatePreviewFromScript(
+      previewText
+    );
+
+  }
+);
+
+
+async function generatePreviewFromScript(text){
+
+  setStatus(
+
+    "⏳ Quick Preview बनाई जा रही है...",
+
+    "loading"
+
+  );
+
+
+  try{
+
+    const response =
+      await fetch(
+
+        "/api/preview",
+
+        {
+
+          method:"POST",
+
+          headers:{
+
+            "Content-Type":
+              "application/json"
+
+          },
+
+          body:JSON.stringify({
+
+            text:text,
+
+            voice:
+              $("voice")?.value ||
+              "arjun",
+
+            style:
+              $("style")?.value ||
+              "neutral",
+
+            preset:
+              $("preset")?.value ||
+              "custom",
+
+            rate:
+              rateValue,
+
+            pitch:
+              pitchValue,
+
+            volume:
+              volumeValue,
+
+            auto_director:
+              $("auto_director")?.checked ??
+              true,
+
+            auto_emotion:
+              $("auto_emotion")?.checked ??
+              true,
+
+            auto_pause:
+              $("auto_pause")?.checked ??
+              true,
+
+            pronunciation:
+              $("pronunciation")?.checked ??
+              true
+
+          })
+
+        }
+
+      );
+
+
+    const data =
+      await response.json();
+
+
+    if(!response.ok){
+
+      throw new Error(
+
+        data.detail ||
+        "Preview failed"
+
+      );
+
+    }
+
+
+    const url =
+      base64ToBlobUrl(
+
+        data.audio_base64,
+
+        data.mime ||
+        "audio/mpeg"
 
       );
 
@@ -1419,29 +1540,34 @@ async function generatePreviewFromScript(
     if($("preview_audio")){
 
       $("preview_audio")
-        .classList.remove(
-          "hidden"
-        );
+        .classList.remove("hidden");
 
       $("preview_audio").src =
         url;
 
-      $("preview_audio").play();
+      $("preview_audio").play()
+        .catch(()=>{});
 
     }
 
 
     setStatus(
+
       "▶️ Quick Preview तैयार है।",
+
       "success"
+
     );
 
 
   }catch(error){
 
     setStatus(
+
       "❌ " + error.message,
+
       "error"
+
     );
 
   }
@@ -1449,21 +1575,21 @@ async function generatePreviewFromScript(
 }
 
 
-/* =========================
+/* =========================================================
    HISTORY
-========================= */
+========================================================= */
 
-function saveHistory(
-  text
-){
+function saveHistory(text){
 
   try{
 
     let history =
       JSON.parse(
+
         localStorage.getItem(
           "ai_voice_v3_history"
         ) || "[]"
+
       );
 
 
@@ -1494,8 +1620,11 @@ function saveHistory(
 
 
     localStorage.setItem(
+
       "ai_voice_v3_history",
+
       JSON.stringify(history)
+
     );
 
 
@@ -1519,9 +1648,6 @@ function renderHistory(){
   const container =
     $("history_list");
 
-  const recent =
-    $("recent_history");
-
 
   let history = [];
 
@@ -1530,9 +1656,11 @@ function renderHistory(){
 
     history =
       JSON.parse(
+
         localStorage.getItem(
           "ai_voice_v3_history"
         ) || "[]"
+
       );
 
   }catch(error){
@@ -1542,111 +1670,55 @@ function renderHistory(){
   }
 
 
-  if(container){
+  if(!container) return;
 
-    if(!history.length){
 
-      container.innerHTML =
-        `<p class="hint">
-          अभी कोई history नहीं है।
-        </p>`;
+  if(!history.length){
 
-    }else{
+    container.innerHTML =
 
-      container.innerHTML =
-        history.map(
-          item=>`
+      `<p class="hint">
+        अभी कोई history नहीं है।
+      </p>`;
 
-            <div class="history-item">
-
-              <div>
-
-                <b>
-                  ${escapeHTML(item.text)}
-                </b>
-
-                <small>
-                  ${item.characters} characters •
-                  ${escapeHTML(item.time)}
-                </small>
-
-              </div>
-
-            </div>
-
-          `
-        ).join("");
-
-    }
+    return;
 
   }
 
 
-  if(recent){
+  container.innerHTML =
 
-    const latest =
-      history.slice(
-        0,
-        3
-      );
+    history.map(
 
+      item=>`
 
-    if(!latest.length){
+        <div class="history-item">
 
-      recent.innerHTML =
-        `<p class="hint">
-          अभी कोई voice history नहीं है।
-        </p>`;
+          <div>
 
-    }else{
+            <b>
+              ${escapeHTML(item.text)}
+            </b>
 
-      recent.innerHTML =
-        latest.map(
-          item=>`
+            <small>
+              ${item.characters} characters •
+              ${escapeHTML(item.time)}
+            </small>
 
-            <div class="history-item">
+          </div>
 
-              <div>
+        </div>
 
-                <b>
-                  ${escapeHTML(item.text)}
-                </b>
+      `
 
-                <small>
-                  ${item.characters} characters
-                </small>
-
-              </div>
-
-            </div>
-
-          `
-        ).join("");
-
-    }
-
-  }
+    ).join("");
 
 }
 
 
-function escapeHTML(
-  value
-){
-
-  return String(value)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-
-}
-
-
-/* =========================
-   AI SCRIPT PLACEHOLDER
-========================= */
+/* =========================================================
+   SCRIPT TOOLS
+========================================================= */
 
 $("script_generate")?.addEventListener(
   "click",
@@ -1668,26 +1740,19 @@ $("script_generate")?.addEventListener(
     }
 
 
-    /*
-      AI Script Generator का backend
-      अभी अलग endpoint नहीं है।
-
-      इसलिए फिलहाल यह बताता है कि
-      feature बाद में backend से जुड़ेगा।
-    */
-
     setStatus(
-      "ℹ️ AI Script Generator को backend AI service से जोड़ना बाकी है।",
+
+      "ℹ️ AI Script Generator अभी backend AI से जुड़ा नहीं है।",
+
       "loading"
+
     );
 
   }
 );
 
 
-/* =========================
-   CLEAN SCRIPT
-========================= */
+/* CLEAN SCRIPT */
 
 $("clean_script")?.addEventListener(
   "click",
@@ -1709,26 +1774,32 @@ $("clean_script")?.addEventListener(
     }
 
 
-    /*
-      Basic local cleaning.
-      यह external AI service नहीं है।
-    */
+    const cleaned =
 
-    let cleaned =
       text
+
         .replace(
+
           /\b(हम्म|उम्म|मतलब|तो दोस्तों|दोस्तो)\b/gi,
+
           ""
+
         )
+
         .replace(
           /\s+/g,
           " "
         )
+
         .trim();
 
 
-    $("script_output").value =
-      cleaned;
+    if($("script_output")){
+
+      $("script_output").value =
+        cleaned;
+
+    }
 
 
     $("script_result")
@@ -1740,9 +1811,7 @@ $("clean_script")?.addEventListener(
 );
 
 
-/* =========================
-   USE SCRIPT
-========================= */
+/* USE SCRIPT */
 
 $("use_script")?.addEventListener(
   "click",
@@ -1756,13 +1825,21 @@ $("use_script")?.addEventListener(
     if(!output) return;
 
 
-    $("text").value =
-      output;
+    if($("text")){
+
+      $("text").value =
+        output;
+
+    }
 
 
-    $("count").textContent =
-      output.length +
-      " / 12000";
+    if($("count")){
+
+      $("count").textContent =
+        output.length +
+        " / 12000";
+
+    }
 
 
     showSection(
@@ -1773,249 +1850,37 @@ $("use_script")?.addEventListener(
 );
 
 
-/* =========================
-   INITIALIZE
-========================= */
-
-updateControls();
-
-loadUsage();
-
-renderHistory();
-
-loadConfig();
-
-/* =========================
-   SELECTED VOICE PREVIEW
-========================= */
-
-$("selected_voice_preview")?.addEventListener(
-  "click",
-  ()=>{
-
-    const voice =
-      $("voice")?.value ||
-      "arjun";
-
-    previewVoice(
-      voice
-    );
-
-  }
-);
-
-/* =========================
-   CONFIG
-========================= */
-
-async function loadConfig(){
-
-  try{
-
-    const response =
-      await fetch(
-        "/api/config?version=pro-v3"
-      );
-
-
-    const data =
-      await response.json();
-
-
-    if(!response.ok){
-
-      throw new Error(
-        data.detail ||
-        "Config failed"
-      );
-
-    }
-
-
-    /* =========================
-       VOICE DROPDOWN
-    ========================= */
-
-    if(
-      $("voice") &&
-      data.voices
-    ){
-
-      $("voice").innerHTML =
-        Object.entries(
-          data.voices
-        )
-        .map(
-          ([key,voice])=>
-            `<option value="${key}">
-              ${voice.label}
-            </option>`
-        )
-        .join("");
-
-
-      /* पुराना Voice Library अब दिखाई नहीं देगा */
-
-      renderVoiceLibrary(
-        data.voices
-      );
-
-
-      /* Settings में भी सभी voices */
-
-      populateSettingsVoiceList(
-        data.voices
-      );
-
-    }
-
-
-    /* =========================
-       STYLE
-    ========================= */
-
-    if(
-      $("style") &&
-      data.styles
-    ){
-
-      $("style").innerHTML =
-        data.styles
-          .map(
-            style=>
-              `<option value="${style}">
-                ${style}
-              </option>`
-          )
-          .join("");
-
-    }
-
-
-    /* =========================
-       APPLY SAVED SETTINGS
-    ========================= */
-
-    applySavedSettings();
-
-
-  }catch(error){
-
-    setStatus(
-      "❌ " + error.message,
-      "error"
-    );
-
-  }
-
-}
-
-    const data =
-      await response.json();
-
-
-    if(!response.ok){
-
-      throw new Error(
-        data.detail ||
-        "Config failed"
-      );
-
-    }
-
-
-    if(
-      $("voice") &&
-      data.voices
-    ){
-
-      $("voice").innerHTML =
-        Object.entries(
-          data.voices
-        )
-        .map(
-          ([key,voice])=>
-            `<option value="${key}">
-              ${voice.label}
-            </option>`
-        )
-        .join("");
-
-
-      renderVoiceLibrary(
-        data.voices
-      );
-
-
-      selectVoice(
-        Object.keys(
-          data.voices
-        )[0] || "arjun"
-      );
-
-    }
-
-
-    if(
-      $("style") &&
-      data.styles
-    ){
-
-      $("style").innerHTML =
-        data.styles
-          .map(
-            style=>
-              `<option value="${style}">
-                ${style}
-              </option>`
-          )
-          .join("");
-
-    }
-
-
-    applyPreset();
-
-
-  }catch(error){
-
-    setStatus(
-      "❌ " + error.message,
-      "error"
-    );
-
-  }
-
-}
-/* =========================
+/* =========================================================
    SETTINGS
-========================= */
+========================================================= */
 
 const DEFAULT_SETTINGS = {
 
-  voice: "arjun",
+  voice:"arjun",
 
-  preset: "custom",
+  preset:"custom",
 
-  rate: 0,
+  rate:0,
 
-  pitch: 0,
+  pitch:0,
 
-  volume: 0,
+  volume:0,
 
-  director: true,
+  director:true,
 
-  emotion: true,
+  emotion:true,
 
-  pause: true,
+  pause:true,
 
-  pronunciation: true
+  pronunciation:true
 
 };
 
 
 let savedSettings = {
+
   ...DEFAULT_SETTINGS
+
 };
 
 
@@ -2036,14 +1901,18 @@ function loadSettings(){
       const parsed =
         JSON.parse(saved);
 
+
       if(
         parsed &&
         typeof parsed === "object"
       ){
 
         savedSettings = {
+
           ...DEFAULT_SETTINGS,
+
           ...parsed
+
         };
 
       }
@@ -2059,13 +1928,10 @@ function loadSettings(){
 
   }
 
-
-  fillSettingsForm();
-
 }
 
 
-/* FILL SETTINGS FORM */
+/* FILL SETTINGS */
 
 function fillSettingsForm(){
 
@@ -2139,6 +2005,149 @@ function fillSettingsForm(){
       savedSettings.pronunciation;
 
   }
+
+}
+
+
+/* APPLY SETTINGS */
+
+function applySavedSettings(){
+
+  if($("voice")){
+
+    selectVoice(
+      savedSettings.voice
+    );
+
+  }
+
+
+  if($("preset")){
+
+    $("preset").value =
+      savedSettings.preset;
+
+  }
+
+
+  rateValue =
+    Number(
+      savedSettings.rate
+    );
+
+
+  pitchValue =
+    Number(
+      savedSettings.pitch
+    );
+
+
+  volumeValue =
+    Number(
+      savedSettings.volume
+    );
+
+
+  if($("auto_director")){
+
+    $("auto_director").checked =
+      savedSettings.director;
+
+  }
+
+
+  if($("auto_emotion")){
+
+    $("auto_emotion").checked =
+      savedSettings.emotion;
+
+  }
+
+
+  if($("auto_pause")){
+
+    $("auto_pause").checked =
+      savedSettings.pause;
+
+  }
+
+
+  if($("pronunciation")){
+
+    $("pronunciation").checked =
+      savedSettings.pronunciation;
+
+  }
+
+
+  updateControls();
+
+
+  /* Update boost selection */
+
+  document.querySelectorAll(
+    ".boost-btn"
+  ).forEach(button=>{
+
+    button.classList.toggle(
+
+      "active",
+
+      Number(
+        button.dataset.boost || 0
+      ) === volumeValue
+
+    );
+
+  });
+
+}
+
+
+/* SETTINGS VOICE LIST */
+
+function populateSettingsVoiceList(
+  voices
+){
+
+  const select =
+    $("setting_voice");
+
+  if(!select) return;
+
+
+  select.innerHTML = "";
+
+
+  Object.entries(
+    voices
+  ).forEach(
+    ([key,voice])=>{
+
+      const option =
+        document.createElement(
+          "option"
+        );
+
+
+      option.value =
+        key;
+
+
+      option.textContent =
+        voice.label;
+
+
+      select.appendChild(
+        option
+      );
+
+    }
+  );
+
+
+  select.value =
+    savedSettings.voice;
 
 }
 
@@ -2217,10 +2226,17 @@ $("save_settings")?.addEventListener(
         $("settings_status").textContent =
           "✅ Settings save हो गईं।";
 
+
         setTimeout(
           ()=>{
-            $("settings_status").textContent =
-              "";
+
+            if($("settings_status")){
+
+              $("settings_status").textContent =
+                "";
+
+            }
+
           },
           2500
         );
@@ -2240,119 +2256,162 @@ $("save_settings")?.addEventListener(
 );
 
 
-/* APPLY SETTINGS */
+/* =========================================================
+   CONFIG
+========================================================= */
 
-function applySavedSettings(){
+async function loadConfig(){
 
-  if($("voice")){
+  try{
 
-    selectVoice(
-      savedSettings.voice
+    const response =
+      await fetch(
+        "/api/config?version=pro-v3"
+      );
+
+
+    const data =
+      await response.json();
+
+
+    if(!response.ok){
+
+      throw new Error(
+
+        data.detail ||
+        "Config failed"
+
+      );
+
+    }
+
+
+    /* VOICE */
+
+    if(
+      $("voice") &&
+      data.voices
+    ){
+
+      $("voice").innerHTML =
+
+        Object.entries(
+          data.voices
+        )
+        .map(
+
+          ([key,voice])=>
+
+            `<option value="${key}">
+              ${escapeHTML(voice.label)}
+            </option>`
+
+        )
+        .join("");
+
+
+      renderVoiceLibrary(
+        data.voices
+      );
+
+
+      populateSettingsVoiceList(
+        data.voices
+      );
+
+    }
+
+
+    /* STYLE */
+
+    if(
+      $("style") &&
+      data.styles
+    ){
+
+      $("style").innerHTML =
+
+        data.styles
+          .map(
+
+            style=>
+
+              `<option value="${style}">
+                ${escapeHTML(style)}
+              </option>`
+
+          )
+          .join("");
+
+    }
+
+
+    /* APPLY SAVED SETTINGS */
+
+    applySavedSettings();
+
+
+  }catch(error){
+
+    setStatus(
+
+      "❌ " + error.message,
+
+      "error"
+
     );
 
   }
 
-
-  if($("preset")){
-
-    $("preset").value =
-      savedSettings.preset;
-
-  }
+}
 
 
-  rateValue =
-    savedSettings.rate;
+/* =========================================================
+   ESCAPE HTML
+========================================================= */
 
-  pitchValue =
-    savedSettings.pitch;
+function escapeHTML(value){
 
-  volumeValue =
-    savedSettings.volume;
+  return String(value)
 
+    .replaceAll(
+      "&",
+      "&amp;"
+    )
 
-  if($("auto_director")){
+    .replaceAll(
+      "<",
+      "&lt;"
+    )
 
-    $("auto_director").checked =
-      savedSettings.director;
+    .replaceAll(
+      ">",
+      "&gt;"
+    )
 
-  }
+    .replaceAll(
+      '"',
+      "&quot;"
+    )
 
-
-  if($("auto_emotion")){
-
-    $("auto_emotion").checked =
-      savedSettings.emotion;
-
-  }
-
-
-  if($("auto_pause")){
-
-    $("auto_pause").checked =
-      savedSettings.pause;
-
-  }
-
-
-  if($("pronunciation")){
-
-    $("pronunciation").checked =
-      savedSettings.pronunciation;
-
-  }
-
-
-  updateControls();
+    .replaceAll(
+      "'",
+      "&#039;"
+    );
 
 }
 
 
-/* SETTINGS VOICE LIST */
-
-function populateSettingsVoiceList(
-  voices
-){
-
-  const select =
-    $("setting_voice");
-
-  if(!select) return;
-
-
-  select.innerHTML = "";
-
-
-  Object.entries(
-    voices
-  ).forEach(
-    ([key,voice])=>{
-
-      const option =
-        document.createElement(
-          "option"
-        );
-
-      option.value =
-        key;
-
-      option.textContent =
-        voice.label;
-
-      select.appendChild(
-        option
-      );
-
-    }
-  );
-
-
-  select.value =
-    savedSettings.voice;
-
-}
-
-
-/* SETTINGS INITIALIZATION */
+/* =========================================================
+   INITIALIZE
+========================================================= */
 
 loadSettings();
+
+updateControls();
+
+loadUsage();
+
+renderHistory();
+
+loadConfig();
