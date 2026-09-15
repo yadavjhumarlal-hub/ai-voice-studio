@@ -102,7 +102,7 @@ $("generate").onclick = async () => {
 
   try {
 
-    const response = await fetch("/api/tts", {
+    const response = await fetch("/api/preview", {
       method: "POST",
 
       headers: {
