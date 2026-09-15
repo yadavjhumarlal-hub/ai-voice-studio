@@ -9,13 +9,13 @@
   --muted:#718096;
   --border:#e3e8f0;
   --primary:#1769e0;
-  --primary-dark:#0f56bf;
   --soft:#eef5ff;
   --danger:#d93025;
   --success:#16833a;
 }
 
-html,body{
+html,
+body{
   margin:0;
   padding:0;
   background:var(--bg);
@@ -36,12 +36,6 @@ input{
 
 button{
   cursor:pointer;
-}
-
-/* APP */
-
-.app{
-  min-height:100vh;
 }
 
 /* TOPBAR */
@@ -207,7 +201,7 @@ button{
   font-size:14px;
 }
 
-/* DASHBOARD CARDS */
+/* DASHBOARD */
 
 .dashboard-grid{
   display:grid;
@@ -222,6 +216,10 @@ button{
   border-radius:18px;
   padding:17px;
   text-align:left;
+}
+
+button.tool-card{
+  color:var(--text);
 }
 
 .tool-card h3{
@@ -269,7 +267,7 @@ button{
 
 textarea{
   width:100%;
-  min-height:230px;
+  min-height:210px;
   resize:vertical;
   border:1px solid #cbd5e1;
   border-radius:15px;
@@ -314,33 +312,7 @@ select{
   outline:none;
 }
 
-/* GRID */
-
-.grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:14px;
-}
-
-label{
-  display:block;
-  font-weight:750;
-  margin:11px 0 7px;
-}
-
-/* PRESET */
-
-.preset-box{
-  display:flex;
-  gap:10px;
-  align-items:center;
-}
-
-.preset-box select{
-  flex:1;
-}
-
-/* AI CONTROLS */
+/* CONTROL LIST */
 
 .control-list{
   display:flex;
@@ -378,6 +350,7 @@ label{
   width:48px;
   height:28px;
   flex:none;
+  margin:0;
 }
 
 .switch input{
@@ -411,19 +384,20 @@ label{
   transform:translateX(20px);
 }
 
-/* VOICE LIBRARY */
+/* VOICE */
 
 .voice-list{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:10px;
+  margin-top:12px;
 }
 
 .voice-card{
   border:1px solid var(--border);
   background:#fff;
   border-radius:14px;
-  padding:13px;
+  padding:12px;
   display:flex;
   align-items:center;
   gap:10px;
@@ -443,7 +417,7 @@ label{
   align-items:center;
   justify-content:center;
   background:#eef1f6;
-  font-size:20px;
+  font-size:19px;
 }
 
 .voice-info{
@@ -469,13 +443,13 @@ label{
   border-radius:10px;
 }
 
-/* VOICE CONTROLS */
+/* VALUE CONTROLS */
 
 .value-control{
-  display:flex;
+  display:grid;
+  grid-template-columns:1fr 42px 70px 42px;
   align-items:center;
-  justify-content:space-between;
-  gap:10px;
+  gap:8px;
   margin:12px 0;
 }
 
@@ -490,7 +464,7 @@ label{
 }
 
 .value-display{
-  min-width:70px;
+  min-width:60px;
   text-align:center;
   font-weight:850;
 }
@@ -501,11 +475,7 @@ label{
   border-top:1px solid var(--border);
 }
 
-.hidden{
-  display:none !important;
-}
-
-/* VOICE BOOST */
+/* BOOST */
 
 .boost-grid{
   display:grid;
@@ -528,7 +498,7 @@ label{
   color:var(--primary);
 }
 
-/* GENERATE */
+/* BUTTONS */
 
 .generate{
   width:100%;
@@ -546,8 +516,6 @@ label{
   opacity:.6;
 }
 
-/* PREVIEW */
-
 .preview-btn{
   width:100%;
   border:1px solid #cfe0f8;
@@ -556,7 +524,7 @@ label{
   border-radius:13px;
   padding:13px;
   font-weight:800;
-  margin-bottom:10px;
+  margin-top:8px;
 }
 
 /* STATUS */
@@ -600,10 +568,13 @@ audio{
 /* USAGE */
 
 .usage-card{
+  width:100%;
   display:flex;
   align-items:center;
   justify-content:space-between;
   gap:12px;
+  color:var(--text);
+  cursor:pointer;
 }
 
 .usage-info b{
@@ -619,6 +590,24 @@ audio{
   font-size:18px;
   font-weight:900;
   color:var(--primary);
+}
+
+/* USAGE BAR */
+
+.usage-bar{
+  height:10px;
+  background:#e8edf4;
+  border-radius:20px;
+  overflow:hidden;
+  margin:10px 0 16px;
+}
+
+.usage-fill{
+  height:100%;
+  width:0;
+  background:var(--primary);
+  border-radius:20px;
+  transition:width .25s ease;
 }
 
 /* MODAL */
@@ -666,23 +655,6 @@ audio{
   border-radius:10px;
 }
 
-/* USAGE BAR */
-
-.usage-bar{
-  height:10px;
-  background:#e8edf4;
-  border-radius:20px;
-  overflow:hidden;
-  margin:10px 0 16px;
-}
-
-.usage-fill{
-  height:100%;
-  width:0;
-  background:var(--primary);
-  border-radius:20px;
-}
-
 /* HISTORY */
 
 .history-item{
@@ -707,6 +679,12 @@ audio{
   color:var(--muted);
 }
 
+/* HIDDEN */
+
+.hidden{
+  display:none !important;
+}
+
 /* FOOTER */
 
 footer{
@@ -722,6 +700,10 @@ footer{
 
   .topbar{
     padding:0 12px;
+  }
+
+  .brand strong{
+    font-size:15px;
   }
 
   .usage-mini{
@@ -743,7 +725,6 @@ footer{
   }
 
   .dashboard-grid,
-  .grid,
   .voice-list{
     grid-template-columns:1fr;
   }
@@ -754,12 +735,12 @@ footer{
   }
 
   textarea{
-    min-height:210px;
+    min-height:205px;
     font-size:16px;
   }
 
-  .voice-card{
-    padding:12px;
+  .value-control{
+    grid-template-columns:1fr 42px 65px 42px;
   }
 
   .boost-grid{
@@ -769,4 +750,5 @@ footer{
   .modal-box{
     border-radius:20px 20px 0 0;
   }
+
 }
