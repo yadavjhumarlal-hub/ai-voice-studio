@@ -384,63 +384,38 @@ select{
   transform:translateX(20px);
 }
 
-/* VOICE */
+/* COMPACT VOICE SELECT */
+
+.voice-select-row{
+  display:grid;
+  grid-template-columns:1fr 48px;
+  gap:8px;
+  align-items:center;
+}
+
+.voice-select-row select{
+  min-width:0;
+}
+
+.voice-select-preview{
+  width:48px;
+  height:48px;
+  border:1px solid #cfe0f8;
+  background:var(--soft);
+  color:var(--primary);
+  border-radius:12px;
+  font-size:20px;
+  font-weight:900;
+}
+
+.voice-select-preview:active{
+  transform:scale(.97);
+}
+
+/* OLD VOICE CARDS HIDDEN */
 
 .voice-list{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-  margin-top:12px;
-}
-
-.voice-card{
-  border:1px solid var(--border);
-  background:#fff;
-  border-radius:14px;
-  padding:12px;
-  display:flex;
-  align-items:center;
-  gap:10px;
-  cursor:pointer;
-}
-
-.voice-card.selected{
-  border-color:var(--primary);
-  background:var(--soft);
-}
-
-.voice-avatar{
-  width:40px;
-  height:40px;
-  border-radius:12px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:#eef1f6;
-  font-size:19px;
-}
-
-.voice-info{
-  flex:1;
-}
-
-.voice-info b{
-  display:block;
-  font-size:14px;
-}
-
-.voice-info small{
-  color:var(--muted);
-  font-size:11px;
-}
-
-.voice-preview{
-  border:0;
-  background:#eef4ff;
-  color:var(--primary);
-  width:34px;
-  height:34px;
-  border-radius:10px;
+  display:none !important;
 }
 
 /* VALUE CONTROLS */
