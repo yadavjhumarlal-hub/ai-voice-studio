@@ -589,18 +589,32 @@ $("advanced_toggle")?.addEventListener(
    USAGE
 ========================================================= */
 
-const USAGE_LIMIT = 10000;
+const USAGE_LIMIT = 450000;
+
+function getCurrentMonth(){
+
+  const now = new Date();
+
+  return (
+    now.getFullYear() +
+    "-" +
+    String(now.getMonth() + 1).padStart(2,"0")
+  );
+
+}
+
 
 let usage = {
 
-  todayCharacters:0,
+  month: getCurrentMonth(),
 
-  todayGenerations:0,
+  monthCharacters: 0,
 
-  lastGeneration:""
+  monthGenerations: 0,
+
+  lastGeneration: ""
 
 };
-
 
 function loadUsage(){
 
@@ -632,6 +646,34 @@ function loadUsage(){
         };
 
       }
+
+    }
+
+
+    /* नया महीना शुरू होने पर reset */
+
+    const currentMonth =
+      getCurrentMonth();
+
+
+    if(
+      usage.month !== currentMonth
+    ){
+
+      usage = {
+
+        month: currentMonth,
+
+        monthCharacters: 0,
+
+        monthGenerations: 0,
+
+        lastGeneration: ""
+
+      };
+
+
+      saveUsage();
 
     }
 
@@ -678,7 +720,7 @@ function updateUsage(){
 
   const used =
     Number(
-      usage.todayCharacters || 0
+      usage.monthCharacters || 0
     );
 
 
@@ -691,6 +733,13 @@ function updateUsage(){
         (used / USAGE_LIMIT) * 100
       )
 
+    );
+
+
+  const remaining =
+    Math.max(
+      0,
+      USAGE_LIMIT - used
     );
 
 
@@ -708,7 +757,7 @@ function updateUsage(){
 
       used.toLocaleString("en-IN") +
 
-      " characters used today";
+      " / 4,50,000 characters this month";
 
   }
 
@@ -719,7 +768,7 @@ function updateUsage(){
 
       used.toLocaleString("en-IN") +
 
-      " characters";
+      " / 4,50,000 characters";
 
   }
 
@@ -728,12 +777,9 @@ function updateUsage(){
 
     $("usage_remaining").textContent =
 
-      Math.max(
-        0,
-        USAGE_LIMIT - used
-      ).toLocaleString("en-IN") +
+      remaining.toLocaleString("en-IN") +
 
-      " characters";
+      " characters remaining";
 
   }
 
@@ -741,7 +787,8 @@ function updateUsage(){
   if($("usage_generations")){
 
     $("usage_generations").textContent =
-      usage.todayGenerations || 0;
+
+      usage.monthGenerations || 0;
 
   }
 
@@ -1155,14 +1202,13 @@ async function generateVoice(){
   }
 
 
-  if(
+ if(
 
-    usage.todayCharacters +
-    text.length >
-    USAGE_LIMIT
+  usage.monthCharacters +
+  text.length >
+  USAGE_LIMIT
 
-  ){
-
+){
     setStatus(
 
       "⚠️ App usage limit पूरी हो गई है।",
@@ -1331,12 +1377,11 @@ async function generateVoice(){
       );
 
 
-    usage.todayCharacters +=
-      actualCharacters;
+    usage.monthCharacters +=
+  actualCharacters;
 
-
-    usage.todayGenerations +=
-      1;
+usage.monthGenerations +=
+  1;
 
 
     usage.lastGeneration =
@@ -1435,6 +1480,31 @@ $("preview")?.addEventListener(
 
 async function generatePreviewFromScript(text){
 
+   const previewCharacters =
+  Number(
+    data.characters ||
+    text.length
+  );
+
+
+usage.monthCharacters +=
+  previewCharacters;
+
+
+usage.monthGenerations +=
+  1;
+
+
+usage.lastGeneration =
+  new Date().toLocaleString(
+    "hi-IN"
+  );
+
+
+saveUsage();
+
+updateUsage();
+   
   setStatus(
 
     "⏳ Quick Preview बनाई जा रही है...",
@@ -1550,7 +1620,31 @@ async function generatePreviewFromScript(text){
 
     }
 
+const previewCharacters =
+  Number(
+    data.characters ||
+    0
+  );
 
+
+usage.monthCharacters +=
+  previewCharacters;
+
+
+usage.monthGenerations +=
+  1;
+
+
+usage.lastGeneration =
+  new Date().toLocaleString(
+    "hi-IN"
+  );
+
+
+saveUsage();
+
+updateUsage();
+     
     setStatus(
 
       "▶️ Quick Preview तैयार है।",
