@@ -664,10 +664,7 @@ def build_ssml(x):
 
     if x.auto_emotion:
 
-        detected =
-            detect_emotion(
-                x.text
-            )
+        detected = detect_emotion(x.text)
 
 
         if detected:
