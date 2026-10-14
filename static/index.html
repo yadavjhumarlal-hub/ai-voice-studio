@@ -264,36 +264,56 @@
 
 
       <!-- VOICE -->
+<!-- VOICE ENGINE AND VOICE SELECTOR -->
 
-      <div class="card">
+<div class="card">
 
-        <div class="section-title">
-          🎙️ <b>Voice</b>
-        </div>
+  <div class="section-title">
+    ⚙️ <b>Voice Engine</b>
+  </div>
 
-        <select id="voice"></select>
+  <label for="engine" class="field-label">
+    Choose Voice Engine
+  </label>
 
-       <div class="voice-select-row">
+  <select id="engine">
+    <option value="edge" selected>🟢 Edge TTS</option>
+    <option value="azure">🔵 Azure Speech</option>
+  </select>
 
-  <select id="voice"></select>
+  <p class="hint">
+    Edge TTS से आवाज बनाने की कोशिश करें।
+    Azure Speech के लिए सक्रिय Azure सेवा आवश्यक है।
+  </p>
 
-  <button
-    id="selected_voice_preview"
-    class="voice-select-preview"
-    type="button"
-  >
-    ▶
-  </button>
+  <div class="section-title" style="margin-top:20px">
+    🎙️ <b>Select Voice</b>
+  </div>
+
+  <div class="voice-select-row">
+
+    <select id="voice">
+      <option value="arjun">Arjun — Male</option>
+    </select>
+
+    <button
+      id="selected_voice_preview"
+      class="voice-select-preview"
+      type="button"
+      aria-label="Preview selected voice"
+    >
+      ▶
+    </button>
+
+  </div>
+
+  <audio
+    id="preview_audio"
+    class="hidden"
+    controls
+  ></audio>
 
 </div>
-
-<audio
-  id="preview_audio"
-  class="hidden"
-  controls
-></audio>
-
-      </div>
 
 
       <!-- AI CONTROLS -->
