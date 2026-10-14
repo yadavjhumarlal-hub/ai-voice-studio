@@ -1,735 +1,401 @@
 import os
 import re
-import html
-import base64
 import asyncio
 import tempfile
 from pathlib import Path
 
-import requests
 import edge_tts
+import requests
 
-from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 
-# ============================================================
-# ENVIRONMENT
-# ============================================================
+app = FastAPI(title="AI Voice Studio PRO V3")
 
-load_dotenv()
+BASE_DIR = Path(__file__).resolve().parent
+STATIC_DIR = BASE_DIR / "static"
 
-KEY = os.getenv("AZURE_SPEECH_KEY", "").strip()
-
-REGION = os.getenv(
-    "AZURE_SPEECH_REGION",
-    "centralindia"
-).strip()
-
-
-# ============================================================
-# APP
-# ============================================================
-
-app = FastAPI(
-    title="AI Voice Studio PRO V3",
-    version="3.1"
-)
-
-app.mount(
-    "/static",
-    StaticFiles(directory="static"),
-    name="static"
-)
-
-
-# ============================================================
-# AZURE VOICES
-# ============================================================
-
-VOICES = {
-    "arjun": ("hi-IN-ArjunNeural", "Arjun — Male"),
-    "madhur": ("hi-IN-MadhurNeural", "Madhur — Male"),
-    "rehaan": ("hi-IN-RehaanNeural", "Rehaan — Male"),
-    "aarav": ("hi-IN-AaravNeural", "Aarav — Male"),
-    "kunal": ("hi-IN-KunalNeural", "Kunal — Male"),
-    "kavya": ("hi-IN-KavyaNeural", "Kavya — Female"),
-    "swara": ("hi-IN-SwaraNeural", "Swara — Female"),
-    "ananya": ("hi-IN-AnanyaNeural", "Ananya — Female"),
-    "aarti": ("hi-IN-AartiNeural", "Aarti — Female"),
-}
-
-
-# ============================================================
-# EDGE TTS VOICES
-# Voice IDs are checked by the Edge TTS service at runtime.
-# ============================================================
-
-EDGE_VOICES = {
-    "arjun": ("hi-IN-ArjunNeural", "Arjun — Male"),
-    "madhur": ("hi-IN-MadhurNeural", "Madhur — Male"),
-    "rehaan": ("hi-IN-RehaanNeural", "Rehaan — Male"),
-    "aarav": ("hi-IN-AaravNeural", "Aarav — Male"),
-    "kunal": ("hi-IN-KunalNeural", "Kunal — Male"),
-    "kavya": ("hi-IN-KavyaNeural", "Kavya — Female"),
-    "swara": ("hi-IN-SwaraNeural", "Swara — Female"),
-    "ananya": ("hi-IN-AnanyaNeural", "Ananya — Female"),
-    "aarti": ("hi-IN-AartiNeural", "Aarti — Female"),
-}
-
-
-# ============================================================
-# STYLES AND PRESETS
-# ============================================================
-
-STYLES = [
-    "neutral",
-    "serious",
-    "excited",
-    "happy",
-    "sad",
-    "soft",
-]
-
-PRESETS = {
-    "custom": {
-        "style": "neutral",
-        "rate": 0,
-        "pitch": 0,
-    },
-    "viral_fact": {
-        "style": "excited",
-        "rate": 5,
-        "pitch": 1,
-    },
-    "news": {
-        "style": "serious",
-        "rate": -2,
-        "pitch": -1,
-    },
-    "mystery": {
-        "style": "serious",
-        "rate": -7,
-        "pitch": -2,
-    },
-    "story": {
-        "style": "soft",
-        "rate": -3,
-        "pitch": 0,
-    },
-    "education": {
-        "style": "neutral",
-        "rate": -1,
-        "pitch": 0,
-    },
-    "emotional": {
-        "style": "sad",
-        "rate": -7,
-        "pitch": -2,
-    },
-    "motivation": {
-        "style": "excited",
-        "rate": 3,
-        "pitch": 1,
-    },
-    "funny": {
-        "style": "happy",
-        "rate": 3,
-        "pitch": 1,
-    },
-}
-
-
-# ============================================================
-# SMART PRONUNCIATION
-# ============================================================
-
-PRONUNCIATION = {
-    "YouTube": "यूट्यूब",
-    "Youtube": "यूट्यूब",
-    "NASA": "नासा",
-    "Nasa": "नासा",
-    "ISRO": "इसरो",
-    "Isro": "इसरो",
-    "AI": "एआई",
-    "5G": "फाइव जी",
-    "4G": "फोर जी",
-    "3G": "थ्री जी",
-    "USB": "यूएसबी",
-    "GPS": "जीपीएस",
-    "OTP": "ओटीपी",
-    "UPI": "यूपीआई",
-    "ATM": "एटीएम",
-    "CPU": "सीपीयू",
-    "PDF": "पीडीएफ",
-    "URL": "यूआरएल",
-    "COVID": "कोविड",
-    "Google": "गूगल",
-    "WhatsApp": "व्हाट्सऐप",
-    "Instagram": "इंस्टाग्राम",
-    "Facebook": "फेसबुक",
-}
-
-
-# ============================================================
-# REQUEST MODEL
-# ============================================================
-
-class Req(BaseModel):
-
-    text: str = Field(
-        min_length=1,
-        max_length=12000
+if STATIC_DIR.exists():
+    app.mount(
+        "/static",
+        StaticFiles(directory=str(STATIC_DIR)),
+        name="static"
     )
 
-    engine: str = "azure"
 
+AZURE_VOICES = {
+    "arjun": {
+        "name": "hi-IN-MadhurNeural",
+        "label": "Madhur — Male"
+    },
+    "swara": {
+        "name": "hi-IN-SwaraNeural",
+        "label": "Swara — Female"
+    }
+}
+
+EDGE_VOICES = {}
+EDGE_VOICE_LIST = []
+
+
+class TTSRequest(BaseModel):
+    text: str = Field(..., min_length=1, max_length=12000)
+    engine: str = "edge"
     voice: str = "arjun"
-
     style: str = "neutral"
-
     preset: str = "custom"
-
-    rate: int = Field(
-        default=0,
-        ge=-30,
-        le=30
-    )
-
-    pitch: int = Field(
-        default=0,
-        ge=-20,
-        le=20
-    )
-
-    volume: int = Field(
-        default=0,
-        ge=-20,
-        le=20
-    )
-
+    rate: int = 0
+    pitch: int = 0
+    volume: int = 0
     auto_director: bool = True
-
     auto_emotion: bool = True
-
     auto_pause: bool = True
-
     pronunciation: bool = True
 
 
-# ============================================================
-# HOME
-# ============================================================
+def clamp(value, low, high):
+    return max(low, min(high, int(value)))
+
+
+async def refresh_edge_voices():
+    global EDGE_VOICES, EDGE_VOICE_LIST
+
+    try:
+        voices = await edge_tts.list_voices()
+
+        hindi_voices = [
+            v for v in voices
+            if v.get("Locale") == "hi-IN"
+        ]
+
+        EDGE_VOICES = {}
+        EDGE_VOICE_LIST = []
+
+        for v in hindi_voices:
+            voice_id = v.get("ShortName", "")
+            gender = v.get("Gender", "")
+            if not voice_id:
+                continue
+
+            key = voice_id
+            label = voice_id.replace("hi-IN-", "")
+
+            if gender == "Male":
+                label += " — Male"
+            elif gender == "Female":
+                label += " — Female"
+
+            EDGE_VOICES[key] = {
+                "name": voice_id,
+                "label": label
+            }
+
+            EDGE_VOICE_LIST.append(key)
+
+    except Exception as exc:
+        print("EDGE VOICE LIST ERROR:", repr(exc))
+
+
+@app.on_event("startup")
+async def startup_event():
+    await refresh_edge_voices()
+
 
 @app.get("/")
-def home():
-    return FileResponse("static/index.html")
+async def home():
+    index_file = STATIC_DIR / "index.html"
 
+    if not index_file.exists():
+        raise HTTPException(
+            status_code=500,
+            detail="static/index.html नहीं मिली।"
+        )
 
-# ============================================================
-# CONFIG
-# ============================================================
+    return FileResponse(str(index_file))
+
 
 @app.get("/api/config")
-def config():
+async def get_config():
+    if not EDGE_VOICES:
+        await refresh_edge_voices()
 
     return {
-        "version": "PRO V3.1",
-
+        "version": "PRO V3.2",
         "engines": [
-            {
-                "id": "azure",
-                "label": "Azure Speech"
-            },
-            {
-                "id": "edge",
-                "label": "Edge TTS"
-            }
+            {"id": "edge", "label": "Edge TTS"},
+            {"id": "azure", "label": "Azure Speech"}
         ],
-
-        "voices": {
-            key: {
-                "name": value[0],
-                "label": value[1]
-            }
-            for key, value in VOICES.items()
-        },
-
-        "edge_voices": {
-            key: {
-                "name": value[0],
-                "label": value[1]
-            }
-            for key, value in EDGE_VOICES.items()
-        },
-
-        "styles": STYLES,
-
-        "presets": PRESETS,
+        "voices": AZURE_VOICES,
+        "edge_voices": EDGE_VOICES,
+        "styles": [
+            "neutral",
+            "serious",
+            "excited",
+            "happy",
+            "sad",
+            "soft"
+        ],
+        "presets": [
+            "custom",
+            "facts",
+            "motivation",
+            "news",
+            "story"
+        ]
     }
 
 
-# ============================================================
-# EMOTION DETECTION
-# ============================================================
+async def make_edge_audio(data: TTSRequest):
+    if not EDGE_VOICES:
+        await refresh_edge_voices()
 
-def detect_emotion(text):
-
-    lower = text.lower()
-
-    if "!" in text or any(word in lower for word in [
-        "वाह",
-        "कमाल",
-        "जबरदस्त",
-        "शानदार",
-        "अविश्वसनीय",
-        "बड़ा खुलासा",
-    ]):
-        return "excited"
-
-    if "?" in text or any(word in lower for word in [
-        "रहस्य",
-        "हैरान",
-        "चौंकाने",
-        "अजीब",
-        "क्या आप जानते",
-    ]):
-        return "serious"
-
-    if any(word in lower for word in [
-        "दुख",
-        "दर्द",
-        "आंसू",
-        "अकेला",
-        "अकेली",
-        "दुखद",
-    ]):
-        return "sad"
-
-    if any(word in lower for word in [
-        "खुशी",
-        "मजेदार",
-        "हंसी",
-        "मजाक",
-        "खुश",
-    ]):
-        return "happy"
-
-    return None
-
-
-# ============================================================
-# TEXT PROCESSING
-# ============================================================
-
-def clean_text(text, pronunciation=True, pauses=True):
-
-    result = text
-
-    if pronunciation:
-        for word in sorted(
-            PRONUNCIATION,
-            key=len,
-            reverse=True
-        ):
-            result = re.sub(
-                re.escape(word),
-                lambda _: PRONUNCIATION[word],
-                result
-            )
-
-    if pauses:
-        # Edge TTS receives plain text, not Azure SSML.
-        # Preserve punctuation and paragraph breaks naturally.
-        result = re.sub(
-            r"[ \t]+",
-            " ",
-            result
-        )
-
-        result = re.sub(
-            r"\n{3,}",
-            "\n\n",
-            result
-        )
-
-    return result.strip()
-
-
-# ============================================================
-# EFFECTIVE VOICE SETTINGS
-# ============================================================
-
-def effective_settings(x):
-
-    rate = x.rate
-    pitch = x.pitch
-    volume = x.volume
-    style = x.style
-
-    preset = PRESETS[x.preset]
-
-    if x.preset != "custom":
-
-        style = preset["style"]
-
-        if x.rate == 0:
-            rate = preset["rate"]
-
-        if x.pitch == 0:
-            pitch = preset["pitch"]
-
-    if x.auto_emotion:
-
-        detected = detect_emotion(x.text)
-
-        if detected:
-            style = detected
-
-            if detected == "excited":
-                rate = min(30, rate + 2)
-                pitch = min(20, pitch + 1)
-
-            elif detected == "serious":
-                rate = max(-30, rate - 2)
-
-            elif detected == "sad":
-                rate = max(-30, rate - 3)
-                pitch = max(-20, pitch - 1)
-
-            elif detected == "happy":
-                rate = min(30, rate + 2)
-
-    if x.auto_director:
-
-        if style == "excited":
-            rate = min(30, rate + 2)
-
-        elif style in ("soft", "sad"):
-            rate = max(-30, rate - 2)
-
-    return rate, pitch, volume, style
-
-
-# ============================================================
-# AZURE SSML
-# ============================================================
-
-def azure_prepare_text(x):
-
-    text = x.text
-
-    if x.pronunciation:
-
-        for word in sorted(
-            PRONUNCIATION,
-            key=len,
-            reverse=True
-        ):
-            text = re.sub(
-                re.escape(word),
-                lambda _: (
-                    f'<sub alias="'
-                    f'{html.escape(PRONUNCIATION[word])}'
-                    f'">'
-                    f'{html.escape(word)}'
-                    f'</sub>'
-                ),
-                text
-            )
-
-    if not x.pronunciation:
-        text = html.escape(text)
-
-    if x.auto_pause:
-
-        text = re.sub(
-            r"([।!?])\s+",
-            r'\1<break time="420ms"/>',
-            text
-        )
-
-        text = re.sub(
-            r"([,;:])\s+",
-            r'\1<break time="180ms"/>',
-            text
-        )
-
-        text = re.sub(
-            r"\n{2,}",
-            '<break time="650ms"/>',
-            text
-        )
-
-    return text
-
-
-def build_ssml(x):
-
-    rate, pitch, volume, _ = effective_settings(x)
-
-    body = azure_prepare_text(x)
-
-    # Use Azure's relative prosody syntax.
-    rate_text = f"{rate:+d}%"
-
-    pitch_text = f"{pitch:+d}%"
-
-    if volume == 0:
-        volume_text = "default"
-    else:
-        volume_text = f"{volume:+d}%"
-
-    voice_name = VOICES[x.voice][0]
-
-    return (
-        '<speak version="1.0" '
-        'xmlns="http://www.w3.org/2001/10/synthesis" '
-        'xml:lang="hi-IN">'
-        f'<voice name="{voice_name}">'
-        f'<prosody rate="{rate_text}" '
-        f'pitch="{pitch_text}" '
-        f'volume="{volume_text}">'
-        f'{body}'
-        '</prosody>'
-        '</voice>'
-        '</speak>'
-    )
-
-
-# ============================================================
-# AZURE TTS
-# ============================================================
-
-def azure_tts(x):
-
-    if not KEY:
+    if not EDGE_VOICES:
         raise HTTPException(
             status_code=503,
             detail=(
-                "Azure Speech Key configured नहीं है "
-                "या Azure Subscription बंद है। "
+                "Edge TTS से हिंदी आवाज़ों की सूची नहीं मिली। "
+                "Render Logs में EDGE VOICE LIST ERROR देखें।"
+            )
+        )
+
+    requested = data.voice
+
+    if requested not in EDGE_VOICES:
+        # पुराने dropdown के arjun/sw​ara जैसे विकल्पों के लिए fallback
+        gender_preference = {
+            "arjun": "Male",
+            "madhur": "Male",
+            "rehaan": "Male",
+            "aarav": "Male",
+            "kunal": "Male",
+            "swara": "Female",
+            "kavya": "Female",
+            "ananya": "Female",
+            "aarti": "Female"
+        }
+
+        preferred_gender = gender_preference.get(requested)
+
+        matching = [
+            key for key in EDGE_VOICE_LIST
+            if preferred_gender
+            and EDGE_VOICES[key]["label"].endswith(
+                "— " + preferred_gender
+            )
+        ]
+
+        requested = (
+            matching[0]
+            if matching
+            else EDGE_VOICE_LIST[0]
+        )
+
+    voice_id = EDGE_VOICES[requested]["name"]
+
+    rate = clamp(data.rate, -30, 30)
+    pitch = clamp(data.pitch, -20, 20)
+    volume = clamp(data.volume, -20, 20)
+
+    communicate = edge_tts.Communicate(
+        text=data.text.strip(),
+        voice=voice_id,
+        rate=f"{rate:+d}%",
+        pitch=f"{pitch * 5:+d}Hz",
+        volume=f"{volume:+d}%"
+    )
+
+    temp = tempfile.NamedTemporaryFile(
+        suffix=".mp3",
+        delete=False
+    )
+    temp_path = temp.name
+    temp.close()
+
+    try:
+        await communicate.save(temp_path)
+
+        if not os.path.exists(temp_path):
+            raise RuntimeError("Audio file नहीं बनी।")
+
+        if os.path.getsize(temp_path) == 0:
+            raise RuntimeError("Audio file खाली है।")
+
+        return temp_path
+
+    except Exception as exc:
+        print("EDGE TTS GENERATION ERROR:", repr(exc))
+
+        try:
+            os.remove(temp_path)
+        except OSError:
+            pass
+
+        raise HTTPException(
+            status_code=502,
+            detail=f"Edge TTS आवाज़ नहीं बना सका: {str(exc)[:500]}"
+        )
+
+
+def make_azure_audio(data: TTSRequest):
+    key = os.getenv("AZURE_SPEECH_KEY", "").strip()
+    region = os.getenv("AZURE_SPEECH_REGION", "").strip()
+
+    if not key or not region:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Azure Speech की key या region Render "
+                "Environment Variables में उपलब्ध नहीं है। "
                 "Edge TTS चुनकर कोशिश करें।"
             )
         )
 
-    ssml = build_ssml(x)
+    voice_info = AZURE_VOICES.get(data.voice)
 
-    url = (
-        f"https://{REGION}"
-        ".tts.speech.microsoft.com/"
-        "cognitiveservices/v1"
+    if not voice_info:
+        voice_info = AZURE_VOICES["arjun"]
+
+    voice_id = voice_info["name"]
+
+    rate = clamp(data.rate, -30, 30)
+    pitch = clamp(data.pitch, -20, 20)
+    volume = clamp(data.volume, -20, 20)
+
+    safe_text = (
+        data.text.strip()
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
     )
 
-    headers = {
-        "Ocp-Apim-Subscription-Key": KEY,
-        "Content-Type": "application/ssml+xml",
-        "X-Microsoft-OutputFormat":
-            "audio-24khz-160kbitrate-mono-mp3",
-        "User-Agent": "AI-Voice-Studio-PRO-V3",
-    }
+    pitch_text = f"{pitch:+d}%"
+    volume_text = (
+        "default" if volume == 0 else f"{volume:+d}%"
+    )
+
+    ssml = f"""
+    <speak version="1.0"
+        xmlns="http://www.w3.org/2001/10/synthesis"
+        xml:lang="hi-IN">
+        <voice name="{voice_id}">
+            <prosody rate="{rate:+d}%"
+                     pitch="{pitch_text}"
+                     volume="{volume_text}">
+                {safe_text}
+            </prosody>
+        </voice>
+    </speak>
+    """
+
+    url = (
+        f"https://{region}.tts.speech.microsoft.com/"
+        "cognitiveservices/v1"
+    )
 
     try:
         response = requests.post(
             url,
-            headers=headers,
+            headers={
+                "Ocp-Apim-Subscription-Key": key,
+                "Content-Type": "application/ssml+xml",
+                "X-Microsoft-OutputFormat": "audio-24khz-48kbitrate-mono-mp3"
+            },
             data=ssml.encode("utf-8"),
-            timeout=60,
+            timeout=45
         )
 
-    except requests.RequestException:
-        raise HTTPException(
-            status_code=502,
-            detail="Azure से कनेक्शन नहीं हो पाया।"
-        )
-
-    if response.status_code != 200:
-        raise HTTPException(
-            status_code=502,
-            detail=(
-                "Azure TTS उपलब्ध नहीं है। "
-                "Edge TTS चुनकर कोशिश करें।"
+        if response.status_code != 200:
+            print(
+                "AZURE TTS ERROR:",
+                response.status_code,
+                response.text[:500]
             )
-        )
 
-    return response.content
+            raise HTTPException(
+                status_code=502,
+                detail=(
+                    f"Azure Speech ने HTTP "
+                    f"{response.status_code} दिया। "
+                    "Edge TTS चुनकर कोशिश करें।"
+                )
+            )
 
-
-# ============================================================
-# EDGE TTS
-# ============================================================
-
-async def edge_tts_audio(x):
-
-    voice_info = EDGE_VOICES.get(x.voice)
-
-    if not voice_info:
-        raise HTTPException(
-            status_code=400,
-            detail="यह Edge TTS Voice उपलब्ध नहीं है।"
-        )
-
-    rate, pitch, volume, _ = effective_settings(x)
-
-    text = clean_text(
-        x.text,
-        pronunciation=x.pronunciation,
-        pauses=x.auto_pause
-    )
-
-    # Edge TTS uses relative percentage values.
-    rate_value = f"{rate:+d}%"
-
-    # Edge TTS pitch is expressed in Hz.
-    # Keep the pitch adjustment modest.
-    pitch_hz = max(-100, min(100, pitch * 5))
-
-    pitch_value = f"{pitch_hz:+d}Hz"
-
-    # Edge TTS volume uses percentage offsets.
-    volume_value = f"{volume:+d}%"
-
-    try:
-
-        communicate = edge_tts.Communicate(
-            text=text,
-            voice=voice_info[0],
-            rate=rate_value,
-            pitch=pitch_value,
-            volume=volume_value,
-        )
-
-        with tempfile.NamedTemporaryFile(
+        temp = tempfile.NamedTemporaryFile(
             suffix=".mp3",
             delete=False
-        ) as temp_file:
-            temp_path = temp_file.name
+        )
 
-        try:
+        temp.write(response.content)
+        temp_path = temp.name
+        temp.close()
 
-            await communicate.save(temp_path)
+        return temp_path
 
-            audio = Path(temp_path).read_bytes()
+    except requests.RequestException as exc:
+        print("AZURE CONNECTION ERROR:", repr(exc))
 
-        finally:
-
-            try:
-                os.remove(temp_path)
-            except OSError:
-                pass
-
-        if not audio:
-            raise RuntimeError("खाली ऑडियो मिला।")
-
-        return audio
-
-    except HTTPException:
-        raise
-
-    except Exception:
         raise HTTPException(
             status_code=502,
-            detail=(
-                "Edge TTS से आवाज़ नहीं बन पाई। "
-                "इंटरनेट या Voice की उपलब्धता जाँचें।"
-            )
+            detail="Azure Speech से कनेक्शन नहीं हो पाया।"
         )
 
 
-# ============================================================
-# VALIDATION
-# ============================================================
+async def generate_audio(data: TTSRequest):
+    text = data.text.strip()
 
-def validate_request(x):
-
-    if x.engine not in ("azure", "edge"):
+    if not text:
         raise HTTPException(
             status_code=400,
-            detail="Invalid engine"
+            detail="कृपया पहले स्क्रिप्ट लिखें।"
         )
 
-    voices = VOICES if x.engine == "azure" else EDGE_VOICES
+    engine = data.engine.lower().strip()
 
-    if x.voice not in voices:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid voice for selected engine"
+    if engine == "edge":
+        return await make_edge_audio(data)
+
+    if engine == "azure":
+        return await asyncio.to_thread(
+            make_azure_audio,
+            data
         )
 
-    if x.style not in STYLES:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid style"
-        )
-
-    if x.preset not in PRESETS:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid preset"
-        )
+    raise HTTPException(
+        status_code=400,
+        detail="अमान्य Voice Engine चुना गया है।"
+    )
 
 
-# ============================================================
-# GENERATE AUDIO
-# ============================================================
+async def audio_response(data: TTSRequest, preview=False):
+    if preview:
+        data.text = data.text[:350]
 
-async def generate_audio(x):
+    temp_path = await generate_audio(data)
 
-    validate_request(x)
+    return FileResponse(
+        temp_path,
+        media_type="audio/mpeg",
+        filename="voice.mp3",
+        background=None
+    )
 
-    if x.engine == "azure":
-        return azure_tts(x)
-
-    return await edge_tts_audio(x)
-
-
-def audio_response(audio, x, version):
-
-    return JSONResponse({
-        "audio_base64": base64.b64encode(audio).decode("ascii"),
-        "mime": "audio/mpeg",
-        "version": version,
-        "engine": x.engine,
-        "characters": len(x.text),
-    })
-
-
-# ============================================================
-# FULL TTS
-# ============================================================
 
 @app.post("/api/tts")
-async def tts(x: Req):
+async def generate_tts(data: TTSRequest):
+    return await audio_response(data)
 
-    audio = await generate_audio(x)
-
-    return audio_response(
-        audio,
-        x,
-        "PRO V3.1"
-    )
-
-
-# ============================================================
-# QUICK PREVIEW
-# ============================================================
 
 @app.post("/api/preview")
-async def preview(x: Req):
+async def preview_tts(data: TTSRequest):
+    return await audio_response(data, preview=True)
 
-    preview_text = x.text[:350]
 
-    preview_request = x.model_copy(
-        update={"text": preview_text}
-    )
-
-    audio = await generate_audio(preview_request)
-
-    return audio_response(
-        audio,
-        preview_request,
-        "PRO V3.1 PREVIEW"
-)
+@app.get("/health")
+async def health():
+    return {
+        "status": "ok",
+        "edge_voice_count": len(EDGE_VOICES)
+    }
