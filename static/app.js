@@ -1,975 +1,551 @@
-"use strict";
-
-/* =========================================================
-   AI VOICE STUDIO PRO V3.1
-   Azure Speech + Edge TTS
-========================================================= */
-
-const $ = id => document.getElementById(id);
-
-const USAGE_LIMIT = 450000;
-
-const DEFAULT_ENGINE = "edge";
-
-const PRESETS = {
-  custom: {
-    style: "neutral",
-    rate: 0,
-    pitch: 0
-  },
-  viral_fact: {
-    style: "excited",
-    rate: 5,
-    pitch: 1
-  },
-  news: {
-    style: "serious",
-    rate: -2,
-    pitch: -1
-  },
-  mystery: {
-    style: "serious",
-    rate: -7,
-    pitch: -2
-  },
-  story: {
-    style: "soft",
-    rate: -3,
-    pitch: 0
-  },
-  education: {
-    style: "neutral",
-    rate: -1,
-    pitch: 0
-  },
-  emotional: {
-    style: "sad",
-    rate: -7,
-    pitch: -2
-  },
-  motivation: {
-    style: "excited",
-    rate: 3,
-    pitch: 1
-  },
-  funny: {
-    style: "happy",
-    rate: 3,
-    pitch: 1
-  }
-};
-
-const DEFAULT_SETTINGS = {
-  engine: DEFAULT_ENGINE,
-  voice: "arjun",
-  preset: "custom",
-  rate: 0,
-  pitch: 0,
-  volume: 0,
-  director: true,
-  emotion: true,
-  pause: true,
-  pronunciation: true
-};
-
-let rateValue = 0;
-let pitchValue = 0;
-let volumeValue = 0;
-
-let currentAudioUrl = null;
-let previewAudioUrl = null;
-
-let currentVoices = {};
-let azureVoices = {};
-let edgeVoices = {};
-
-let savedSettings = { ...DEFAULT_SETTINGS };
-
-let isGenerating = false;
-
-
-/* =========================================================
-   STATUS
-========================================================= */
-
-function setStatus(message, className = "") {
-  const status = $("status");
-
-  if (!status) return;
-
-  status.textContent = message;
-  status.className = className;
-}
-
-
-/* =========================================================
-   SAFE HTML
-========================================================= */
-
-function escapeHTML(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-
-/* =========================================================
-   SIDEBAR
-========================================================= */
-
-function openSidebar() {
-  $("sidebar")?.classList.add("open");
-  $("overlay")?.classList.add("show");
-}
-
-function closeSidebar() {
-  $("sidebar")?.classList.remove("open");
-  $("overlay")?.classList.remove("show");
-}
-
-$("menu_btn")?.addEventListener("click", openSidebar);
-$("close_sidebar")?.addEventListener("click", closeSidebar);
-$("overlay")?.addEventListener("click", closeSidebar);
-
-
-/* =========================================================
-   SECTION NAVIGATION
-========================================================= */
-
-function showSection(section) {
-  const sections = [
-    "dashboard_section",
-    "voice_section",
-    "script_section",
-    "history_section",
-    "settings_section"
-  ];
-
-  sections.forEach(id => {
-    $(id)?.classList.add("hidden");
-  });
-
-  const sectionMap = {
-    dashboard: "dashboard_section",
-    voice: "voice_section",
-    script: "script_section",
-    history: "history_section",
-    settings: "settings_section"
-  };
-
-  const target = sectionMap[section];
-
-  if (target) {
-    $(target)?.classList.remove("hidden");
-  }
-
-  if (section === "history") {
-    renderHistory();
-  }
-
-  if (section === "settings") {
-    fillSettingsForm();
-  }
-
-  document.querySelectorAll(".nav button").forEach(button => {
-    button.classList.toggle(
-      "active",
-      button.dataset.section === section
-    );
-  });
-}
-
-document.querySelectorAll(".nav button[data-section]")
-  .forEach(button => {
-    button.addEventListener("click", () => {
-      showSection(button.dataset.section);
-      closeSidebar();
-    });
-  });
-
-$("history_nav")?.addEventListener("click", () => {
-  showSection("history");
-  closeSidebar();
-});
-
-$("usage_nav")?.addEventListener("click", () => {
-  openUsage();
-  closeSidebar();
-});
-
-$("settings_nav")?.addEventListener("click", () => {
-  showSection("settings");
-  closeSidebar();
-});
-
-document.querySelectorAll("[data-open]").forEach(card => {
-  card.addEventListener("click", () => {
-    showSection(card.dataset.open);
-  });
-});
-
-
-/* =========================================================
-   SCRIPT COUNTER AND CLEAR
-========================================================= */
-
-$("text")?.addEventListener("input", () => {
-  if ($("count")) {
-    $("count").textContent =
-      $("text").value.length + " / 12000";
-  }
-});
-
-$("clear")?.addEventListener("click", () => {
-  if ($("text")) $("text").value = "";
-
-  if ($("count")) {
-    $("count").textContent = "0 / 12000";
-  }
-
-  $("out")?.classList.add("hidden");
-
-  setStatus("");
-});
-
-
-/* =========================================================
-   PRESET AND CONTROLS
-========================================================= */
-
-function applyPreset() {
-  const name = $("preset")?.value || "custom";
-  const preset = PRESETS[name];
-
-  if (!preset) return;
-
-  rateValue = preset.rate;
-  pitchValue = preset.pitch;
-
-  updateControls();
-}
-
-$("preset")?.addEventListener("change", applyPreset);
-
-function updateControls() {
-  if ($("rate_value")) {
-    $("rate_value").textContent =
-      `${rateValue > 0 ? "+" : ""}${rateValue}%`;
-  }
-
-  if ($("pitch_value")) {
-    $("pitch_value").textContent =
-      `${pitchValue > 0 ? "+" : ""}${pitchValue}%`;
-  }
-
-  if ($("volume_value")) {
-    $("volume_value").textContent =
-      `${volumeValue > 0 ? "+" : ""}${volumeValue}%`;
-  }
-}
-
-$("rate_minus")?.addEventListener("click", () => {
-  rateValue = Math.max(-30, rateValue - 1);
-  updateControls();
-});
-
-$("rate_plus")?.addEventListener("click", () => {
-  rateValue = Math.min(30, rateValue + 1);
-  updateControls();
-});
-
-$("pitch_minus")?.addEventListener("click", () => {
-  pitchValue = Math.max(-20, pitchValue - 1);
-  updateControls();
-});
-
-$("pitch_plus")?.addEventListener("click", () => {
-  pitchValue = Math.min(20, pitchValue + 1);
-  updateControls();
-});
-
-$("volume_minus")?.addEventListener("click", () => {
-  volumeValue = Math.max(-20, volumeValue - 1);
-  updateControls();
-});
-
-$("volume_plus")?.addEventListener("click", () => {
-  volumeValue = Math.min(20, volumeValue + 1);
-  updateControls();
-});
-
-document.querySelectorAll(".boost-btn").forEach(button => {
-  button.addEventListener("click", () => {
-    document.querySelectorAll(".boost-btn").forEach(item => {
-      item.classList.remove("active");
-    });
-
-    button.classList.add("active");
-
-    volumeValue = Number(button.dataset.boost || 0);
-
-    updateControls();
-  });
-});
-
-$("advanced_toggle")?.addEventListener("click", () => {
-  $("advanced_controls")?.classList.toggle("hidden");
-});
-
-
-/* =========================================================
-   MONTHLY APP USAGE
-   This is NOT the real Azure quota.
-========================================================= */
-
-function getCurrentMonth() {
-  const now = new Date();
-
-  return (
-    now.getFullYear() +
-    "-" +
-    String(now.getMonth() + 1).padStart(2, "0")
-  );
-}
-
-let usage = {
-  month: getCurrentMonth(),
-  monthCharacters: 0,
-  monthGenerations: 0,
-  lastGeneration: ""
-};
-
-function saveUsage() {
-  try {
-    localStorage.setItem(
-      "ai_voice_v3_usage",
-      JSON.stringify(usage)
-    );
-  } catch (error) {
-    console.warn("Usage save error:", error);
-  }
-}
-
-function loadUsage() {
-  try {
-    const stored = localStorage.getItem("ai_voice_v3_usage");
-
-    if (stored) {
-      const parsed = JSON.parse(stored);
-
-      if (parsed && typeof parsed === "object") {
-        usage = { ...usage, ...parsed };
-      }
+import os
+import asyncio
+import tempfile
+import base64
+from pathlib import Path
+
+import requests
+import edge_tts
+
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, Field
+
+
+# ==================================================
+# AI VOICE STUDIO PRO V3.2
+# Azure Speech + Edge TTS
+# ==================================================
+
+app = FastAPI(title="AI Voice Studio PRO V3")
+
+BASE_DIR = Path(__file__).resolve().parent
+STATIC_DIR = BASE_DIR / "static"
+
+if STATIC_DIR.exists():
+    app.mount(
+        "/static",
+        StaticFiles(directory=str(STATIC_DIR)),
+        name="static"
+    )
+
+
+# -------------------------------
+# Azure Voices
+# -------------------------------
+
+AZURE_VOICES = {
+    "arjun": {
+        "name": "hi-IN-MadhurNeural",
+        "label": "Madhur — Male"
+    },
+    "swara": {
+        "name": "hi-IN-SwaraNeural",
+        "label": "Swara — Female"
     }
-
-    if (usage.month !== getCurrentMonth()) {
-      usage = {
-        month: getCurrentMonth(),
-        monthCharacters: 0,
-        monthGenerations: 0,
-        lastGeneration: ""
-      };
-
-      saveUsage();
-    }
-  } catch (error) {
-    console.warn("Usage load error:", error);
-  }
-
-  updateUsage();
 }
 
-function recordUsage(characters) {
-  const count = Math.max(0, Number(characters) || 0);
-
-  usage.monthCharacters += count;
-  usage.monthGenerations += 1;
-  usage.lastGeneration = new Date().toLocaleString("hi-IN");
-
-  saveUsage();
-  updateUsage();
-}
-
-function updateUsage() {
-  const used = Math.max(
-    0,
-    Number(usage.monthCharacters) || 0
-  );
-
-  const percent = Math.min(
-    100,
-    Math.round((used / USAGE_LIMIT) * 100)
-  );
-
-  const remaining = Math.max(0, USAGE_LIMIT - used);
-
-  if ($("usage_percent")) {
-    $("usage_percent").textContent = percent + "%";
-  }
-
-  if ($("usage_summary")) {
-    $("usage_summary").textContent =
-      `${used.toLocaleString("en-IN")} / 4,50,000 characters this month`;
-  }
-
-  if ($("usage_used")) {
-    $("usage_used").textContent =
-      `${used.toLocaleString("en-IN")} / 4,50,000 characters`;
-  }
-
-  if ($("usage_remaining")) {
-    $("usage_remaining").textContent =
-      `${remaining.toLocaleString("en-IN")} characters remaining`;
-  }
-
-  if ($("usage_generations")) {
-    $("usage_generations").textContent =
-      usage.monthGenerations || 0;
-  }
-
-  if ($("usage_last")) {
-    $("usage_last").textContent =
-      usage.lastGeneration || "अभी कोई generation नहीं";
-  }
-
-  if ($("usage_fill")) {
-    $("usage_fill").style.width = percent + "%";
-  }
-
-  if ($("usage_mini")) {
-    $("usage_mini").textContent = `📊 Usage ${percent}%`;
-  }
-}
-
-function canUseCharacters(characters) {
-  const count = Math.max(0, Number(characters) || 0);
-
-  return usage.monthCharacters + count <= USAGE_LIMIT;
-}
-
-function openUsage() {
-  $("usage_modal")?.classList.add("show");
-}
-
-$("usage_mini")?.addEventListener("click", openUsage);
-$("usage_card")?.addEventListener("click", openUsage);
-
-$("usage_close")?.addEventListener("click", () => {
-  $("usage_modal")?.classList.remove("show");
-});
-
-$("usage_modal")?.addEventListener("click", event => {
-  if (event.target === $("usage_modal")) {
-    $("usage_modal").classList.remove("show");
-  }
-});
-
-
-/* =========================================================
-   SETTINGS
-========================================================= */
-
-function loadSettings() {
-  try {
-    const stored = localStorage.getItem("ai_voice_v3_settings");
-
-    if (stored) {
-      const parsed = JSON.parse(stored);
-
-      if (parsed && typeof parsed === "object") {
-        savedSettings = {
-          ...DEFAULT_SETTINGS,
-          ...parsed
-        };
-      }
-    }
-  } catch (error) {
-    console.warn("Settings load error:", error);
-  }
-}
-
-function populateSettingsVoiceList() {
-  const select = $("setting_voice");
-
-  if (!select) return;
-
-  select.innerHTML = "";
-
-  Object.entries(currentVoices).forEach(([key, voice]) => {
-    const option = document.createElement("option");
 
-    option.value = key;
-    option.textContent = voice.label;
+# -------------------------------
+# Edge Voices
+# -------------------------------
 
-    select.appendChild(option);
-  });
+EDGE_VOICES = {}
+EDGE_VOICE_LIST = []
 
-  if (currentVoices[savedSettings.voice]) {
-    select.value = savedSettings.voice;
-  } else if (select.options.length) {
-    select.selectedIndex = 0;
-  }
-}
 
-function fillSettingsForm() {
-  if ($("setting_preset")) {
-    $("setting_preset").value = savedSettings.preset;
-  }
+# -------------------------------
+# Request Model
+# -------------------------------
 
-  if ($("setting_rate")) {
-    $("setting_rate").value = String(savedSettings.rate);
-  }
+class TTSRequest(BaseModel):
+    text: str = Field(..., min_length=1, max_length=12000)
+    engine: str = "edge"
+    voice: str = "arjun"
+    style: str = "neutral"
+    preset: str = "custom"
 
-  if ($("setting_pitch")) {
-    $("setting_pitch").value = String(savedSettings.pitch);
-  }
+    rate: int = 0
+    pitch: int = 0
+    volume: int = 0
 
-  if ($("setting_volume")) {
-    $("setting_volume").value = String(savedSettings.volume);
-  }
+    auto_director: bool = True
+    auto_emotion: bool = True
+    auto_pause: bool = True
+    pronunciation: bool = True
 
-  if ($("setting_director")) {
-    $("setting_director").checked = savedSettings.director;
-  }
 
-  if ($("setting_emotion")) {
-    $("setting_emotion").checked = savedSettings.emotion;
-  }
+# -------------------------------
+# Helpers
+# -------------------------------
 
-  if ($("setting_pause")) {
-    $("setting_pause").checked = savedSettings.pause;
-  }
+def clamp(value, minimum, maximum):
+    return max(minimum, min(maximum, int(value)))
 
-  if ($("setting_pronunciation")) {
-    $("setting_pronunciation").checked =
-      savedSettings.pronunciation;
-  }
 
-  populateSettingsVoiceList();
-}
+def error_response(message, status_code=500):
+    raise HTTPException(
+        status_code=status_code,
+        detail=message
+    )
 
-function applySavedSettings() {
-  if ($("engine")) {
-    $("engine").value = savedSettings.engine;
-  }
 
-  if ($("preset")) {
-    $("preset").value = savedSettings.preset;
-  }
+# -------------------------------
+# Load Edge Hindi Voices
+# -------------------------------
 
-  rateValue = Number(savedSettings.rate) || 0;
-  pitchValue = Number(savedSettings.pitch) || 0;
-  volumeValue = Number(savedSettings.volume) || 0;
+async def refresh_edge_voices():
+    global EDGE_VOICES
+    global EDGE_VOICE_LIST
 
-  if ($("auto_director")) {
-    $("auto_director").checked = savedSettings.director;
-  }
+    try:
+        voices = await edge_tts.list_voices()
 
-  if ($("auto_emotion")) {
-    $("auto_emotion").checked = savedSettings.emotion;
-  }
+        hindi_voices = [
+            voice
+            for voice in voices
+            if voice.get("Locale") == "hi-IN"
+        ]
 
-  if ($("auto_pause")) {
-    $("auto_pause").checked = savedSettings.pause;
-  }
+        new_voices = {}
 
-  if ($("pronunciation")) {
-    $("pronunciation").checked = savedSettings.pronunciation;
-  }
+        for voice in hindi_voices:
+            voice_id = voice.get("ShortName")
 
-  updateControls();
+            if not voice_id:
+                continue
 
-  document.querySelectorAll(".boost-btn").forEach(button => {
-    button.classList.toggle(
-      "active",
-      Number(button.dataset.boost || 0) === volumeValue
-    );
-  });
+            gender = voice.get("Gender", "")
+            label = voice_id.replace("hi-IN-", "")
 
-  populateSettingsVoiceList();
-}
+            if gender:
+                label += f" — {gender}"
 
-$("save_settings")?.addEventListener("click", () => {
-  savedSettings = {
-    ...savedSettings,
+            new_voices[voice_id] = {
+                "name": voice_id,
+                "label": label
+            }
 
-    voice: $("setting_voice")?.value || "arjun",
+        EDGE_VOICES = new_voices
+        EDGE_VOICE_LIST = list(new_voices.keys())
 
-    preset: $("setting_preset")?.value || "custom",
-
-    rate: Number($("setting_rate")?.value || 0),
-
-    pitch: Number($("setting_pitch")?.value || 0),
-
-    volume: Number($("setting_volume")?.value || 0),
-
-    director: $("setting_director")?.checked ?? true,
-
-    emotion: $("setting_emotion")?.checked ?? true,
-
-    pause: $("setting_pause")?.checked ?? true,
-
-    pronunciation: $("setting_pronunciation")?.checked ?? true
-  };
-
-  try {
-    localStorage.setItem(
-      "ai_voice_v3_settings",
-      JSON.stringify(savedSettings)
-    );
-
-    applySavedSettings();
-
-    if ($("settings_status")) {
-      $("settings_status").textContent = "✅ Settings save हो गईं।";
-
-      setTimeout(() => {
-        if ($("settings_status")) {
-          $("settings_status").textContent = "";
-        }
-      }, 2500);
-    }
-  } catch (error) {
-    setStatus("❌ Settings save नहीं हो सकीं।", "error");
-  }
-});
-
-
-/* =========================================================
-   VOICE LIST
-========================================================= */
-
-function getVoiceLabel(key, voice) {
-  return voice.label || voice.name || key;
-}
-
-function populateVoiceDropdown(preferredVoice) {
-  const select = $("voice");
-
-  if (!select) return;
-
-  const oldVoice = preferredVoice || select.value;
-
-  select.innerHTML = "";
-
-  Object.entries(currentVoices).forEach(([key, voice]) => {
-    const option = document.createElement("option");
-
-    option.value = key;
-    option.textContent = getVoiceLabel(key, voice);
-
-    select.appendChild(option);
-  });
-
-  if (currentVoices[oldVoice]) {
-    select.value = oldVoice;
-  } else if (currentVoices.arjun) {
-    select.value = "arjun";
-  } else if (select.options.length) {
-    select.selectedIndex = 0;
-  }
-
-  populateSettingsVoiceList();
-}
-
-function changeEngine(engine, preferredVoice) {
-  const selectedEngine =
-    engine === "azure" ? "azure" : "edge";
-
-  currentVoices =
-    selectedEngine === "azure" ? azureVoices : edgeVoices;
-
-  if (!Object.keys(currentVoices).length) {
-    setStatus(
-      "❌ इस Engine की Voice List उपलब्ध नहीं है।",
-      "error"
-    );
-    return;
-  }
-
-  if ($("engine")) {
-    $("engine").value = selectedEngine;
-  }
-
-  populateVoiceDropdown(preferredVoice);
-
-  savedSettings.engine = selectedEngine;
-  savedSettings.voice = $("voice")?.value || "arjun";
-
-  try {
-    localStorage.setItem(
-      "ai_voice_v3_settings",
-      JSON.stringify(savedSettings)
-    );
-  } catch (_) {}
-}
-
-$("engine")?.addEventListener("change", () => {
-  changeEngine($("engine").value);
-
-  setStatus(
-    $("engine").value === "edge"
-      ? "🟢 Edge TTS चुना गया है।"
-      : "🔵 Azure Speech चुना गया है।"
-  );
-});
-
-$("voice")?.addEventListener("change", () => {
-  savedSettings.voice = $("voice").value;
-});
-
-
-/* =========================================================
-   AUDIO UTILITIES
-========================================================= */
-
-function base64ToBlobUrl(base64, mime = "audio/mpeg") {
-  const binary = atob(base64);
-
-  const bytes = new Uint8Array(binary.length);
-
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-
-  return URL.createObjectURL(
-    new Blob([bytes], { type: mime })
-  );
-}
-
-async function readResponse(response) {
-    const contentType = (
-        response.headers.get("content-type") || ""
-    ).toLowerCase();
-
-    // MP3 ऑडियो को JSON की तरह पढ़ने से रोकें
-    if (
-        response.ok &&
-        (
-            contentType.includes("audio/") ||
-            contentType.includes("application/octet-stream")
+        print(
+            "EDGE VOICES LOADED:",
+            len(EDGE_VOICE_LIST)
         )
-    ) {
-        return null;
+
+    except Exception as exc:
+        print(
+            "EDGE VOICE LIST ERROR:",
+            repr(exc)
+        )
+
+
+@app.on_event("startup")
+async def startup_event():
+    await refresh_edge_voices()
+
+
+# -------------------------------
+# Home Page
+# -------------------------------
+
+@app.get("/")
+async def home():
+    index_file = STATIC_DIR / "index.html"
+
+    if not index_file.exists():
+        raise HTTPException(
+            status_code=500,
+            detail="static/index.html नहीं मिली।"
+        )
+
+    return FileResponse(str(index_file))
+
+
+# -------------------------------
+# Health Check
+# -------------------------------
+
+@app.get("/health")
+async def health():
+    return {
+        "status": "ok",
+        "edge_voice_count": len(EDGE_VOICE_LIST)
     }
 
-    let data = {};
 
-    try {
-        data = await response.json();
-    } catch (error) {
-        if (!response.ok) {
-            throw new Error(
-                `Server error: HTTP ${response.status}`
-            );
-        }
+# -------------------------------
+# Configuration API
+# -------------------------------
 
-        throw new Error(
-            "सर्वर से सही JSON उत्तर नहीं मिला।"
-        );
+@app.get("/api/config")
+async def get_config():
+    if not EDGE_VOICES:
+        await refresh_edge_voices()
+
+    return {
+        "version": "PRO V3.2",
+
+        "engines": [
+            {
+                "id": "edge",
+                "label": "Edge TTS"
+            },
+            {
+                "id": "azure",
+                "label": "Azure Speech"
+            }
+        ],
+
+        "voices": AZURE_VOICES,
+        "edge_voices": EDGE_VOICES,
+
+        "styles": [
+            "neutral",
+            "serious",
+            "excited",
+            "happy",
+            "sad",
+            "soft"
+        ],
+
+        "presets": [
+            "custom",
+            "facts",
+            "motivation",
+            "news",
+            "story"
+        ]
     }
 
-    if (!response.ok) {
-        throw new Error(
-            data.detail ||
-            data.message ||
-            `HTTP ${response.status}`
-        );
+
+# -------------------------------
+# Select Edge Voice
+# -------------------------------
+
+def select_edge_voice(requested_voice):
+    if requested_voice in EDGE_VOICES:
+        return requested_voice
+
+    gender_preferences = {
+        "arjun": "Male",
+        "madhur": "Male",
+        "rehaan": "Male",
+        "aarav": "Male",
+        "kunal": "Male",
+        "swara": "Female",
+        "kavya": "Female",
+        "ananya": "Female",
+        "aarti": "Female"
     }
 
-    return data;
-         }
+    preferred_gender = gender_preferences.get(
+        requested_voice
+    )
 
-function getRequestPayload(text) {
-  return {
-    text,
+    if preferred_gender:
+        for voice_id, voice_info in EDGE_VOICES.items():
+            if voice_info["label"].endswith(
+                "— " + preferred_gender
+            ):
+                return voice_id
 
-    engine: $("engine")?.value || DEFAULT_ENGINE,
+    if EDGE_VOICE_LIST:
+        return EDGE_VOICE_LIST[0]
 
-    voice: $("voice")?.value || "arjun",
-
-    style: $("style")?.value || "neutral",
-
-    preset: $("preset")?.value || "custom",
-
-    rate: rateValue,
-
-    pitch: pitchValue,
-
-    volume: volumeValue,
-
-    auto_director: $("auto_director")?.checked ?? true,
-
-    auto_emotion: $("auto_emotion")?.checked ?? true,
-
-    auto_pause: $("auto_pause")?.checked ?? true,
-
-    pronunciation: $("pronunciation")?.checked ?? true
-  };
-}
+    raise HTTPException(
+        status_code=503,
+        detail=(
+            "Edge TTS की हिंदी आवाज़ें उपलब्ध नहीं हैं। "
+            "कृपया कुछ देर बाद प्रयास करें।"
+        )
+    )
 
 
-/* =========================================================
-   PREVIEW HELPERS
-========================================================= */
+# -------------------------------
+# Edge TTS Generation
+# -------------------------------
 
-async function requestPreview(text, mode = "quick") {
-  const characters = text.length;
+async def make_edge_audio(data: TTSRequest):
+    if not EDGE_VOICES:
+        await refresh_edge_voices()
 
-  if (!text.trim()) {
-    setStatus("⚠️ पहले Script लिखें।", "error");
-    return;
-  }
+    voice_id = select_edge_voice(data.voice)
+    voice_name = EDGE_VOICES[voice_id]["name"]
 
-  if (!canUseCharacters(characters)) {
-    setStatus(
-      "⚠️ App monthly usage limit पूरी हो गई है।",
-      "error"
-    );
-    return;
-  }
+    rate = clamp(data.rate, -30, 30)
+    pitch = clamp(data.pitch, -20, 20)
+    volume = clamp(data.volume, -20, 20)
 
-  setStatus("⏳ Voice Preview बनाई जा रही है...", "loading");
+    temp_file = tempfile.NamedTemporaryFile(
+        suffix=".mp3",
+        delete=False
+    )
 
-  try {
-    const response = await fetch("/api/preview", {
-      method: "POST",
+    temp_path = temp_file.name
+    temp_file.close()
 
-      headers: {
-        "Content-Type": "application/json"
-      },
+    try:
+        communicate = edge_tts.Communicate(
+            text=data.text.strip(),
+            voice=voice_name,
+            rate=f"{rate:+d}%",
+            pitch=f"{pitch * 5:+d}Hz",
+            volume=f"{volume:+d}%"
+        )
 
-      body: JSON.stringify(getRequestPayload(text))
-    });
+        await communicate.save(temp_path)
 
-    const data = await readResponse(response);
+        if (
+            not os.path.exists(temp_path)
+            or os.path.getsize(temp_path) == 0
+        ):
+            raise RuntimeError(
+                "Edge TTS ने खाली ऑडियो फ़ाइल बनाई।"
+            )
 
-    const url = base64ToBlobUrl(
-      data.audio_base64,
-      data.mime || "audio/mpeg"
-    );
+        return temp_path
 
-    if (previewAudioUrl) {
-      URL.revokeObjectURL(previewAudioUrl);
-    }
+    except Exception as exc:
+        print(
+            "EDGE TTS GENERATION ERROR:",
+            repr(exc)
+        )
 
-    previewAudioUrl = url;
+        try:
+            os.remove(temp_path)
+        except OSError:
+            pass
 
-    const audio = $("preview_audio");
-
-    if (audio) {
-      audio.classList.remove("hidden");
-      audio.src = url;
-      audio.load();
-      audio.play().catch(() => {});
-    }
-
-    recordUsage(Number(data.characters ?? characters));
-
-    setStatus(
-      mode === "voice"
-        ? "▶️ Voice Preview तैयार है।"
-        : "▶️ Quick Preview तैयार है।",
-      "success"
-    );
-
-  } catch (error) {
-    setStatus("❌ " + error.message, "error");
-  }
-}
+        raise HTTPException(
+            status_code=502,
+            detail=(
+                "Edge TTS आवाज़ नहीं बना सका। "
+                f"विवरण: {str(exc)[:300]}"
+            )
+        )
 
 
-/* SELECTED VOICE PREVIEW */
+# -------------------------------
+# Azure TTS Generation
+# -------------------------------
 
-async function previewVoice() {
-  const text =
-    "नमस्कार! यह AI Voice Studio की Voice Preview है।";
+def make_azure_audio(data: TTSRequest):
+    key = os.getenv(
+        "AZURE_SPEECH_KEY",
+        ""
+    ).strip()
 
-  await requestPreview(text, "voice");
-}
+    region = os.getenv(
+        "AZURE_SPEECH_REGION",
+        ""
+    ).strip()
 
-$("selected_voice_preview")?.addEventListener(
-  "click",
-  previewVoice
-);
+    if not key or not region:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Azure Speech सक्रिय नहीं है। "
+                "Edge TTS चुनकर कोशिश करें।"
+            )
+        )
+
+    voice_info = AZURE_VOICES.get(
+        data.voice,
+        AZURE_VOICES["arjun"]
+    )
+
+    voice_name = voice_info["name"]
+
+    rate = clamp(data.rate, -30, 30)
+    pitch = clamp(data.pitch, -20, 20)
+    volume = clamp(data.volume, -20, 20)
+
+    safe_text = (
+        data.text.strip()
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+    )
+
+    pitch_text = f"{pitch:+d}%"
+
+    volume_text = (
+        "default"
+        if volume == 0
+        else f"{volume:+d}%"
+    )
+
+    ssml = f"""
+    <speak version="1.0"
+        xmlns="http://www.w3.org/2001/10/synthesis"
+        xml:lang="hi-IN">
+        <voice name="{voice_name}">
+            <prosody
+                rate="{rate:+d}%"
+                pitch="{pitch_text}"
+                volume="{volume_text}">
+                {safe_text}
+            </prosody>
+        </voice>
+    </speak>
+    """
+
+    url = (
+        f"https://{region}.tts.speech.microsoft.com/"
+        "cognitiveservices/v1"
+    )
+
+    try:
+        response = requests.post(
+            url,
+            headers={
+                "Ocp-Apim-Subscription-Key": key,
+                "Content-Type": "application/ssml+xml",
+                "X-Microsoft-OutputFormat":
+                    "audio-24khz-48kbitrate-mono-mp3"
+            },
+            data=ssml.encode("utf-8"),
+            timeout=45
+        )
+
+        if response.status_code != 200:
+            print(
+                "AZURE TTS ERROR:",
+                response.status_code,
+                response.text[:300]
+            )
+
+            raise HTTPException(
+                status_code=502,
+                detail=(
+                    "Azure Speech अनुरोध विफल हुआ। "
+                    f"HTTP {response.status_code}"
+                )
+            )
+
+        temp_file = tempfile.NamedTemporaryFile(
+            suffix=".mp3",
+            delete=False
+        )
+
+        temp_file.write(response.content)
+        temp_path = temp_file.name
+        temp_file.close()
+
+        if os.path.getsize(temp_path) == 0:
+            os.remove(temp_path)
+
+            raise HTTPException(
+                status_code=502,
+                detail="Azure ने खाली ऑडियो फ़ाइल दी।"
+            )
+
+        return temp_path
+
+    except requests.RequestException as exc:
+        print(
+            "AZURE CONNECTION ERROR:",
+            repr(exc)
+        )
+
+        raise HTTPException(
+            status_code=502,
+            detail="Azure Speech से कनेक्शन नहीं हो पाया।"
+        )
 
 
-/* QUICK PREVIEW */
+# -------------------------------
+# Generate Audio
+# -------------------------------
 
-$("preview")?.addEventListener("click", async () => {
-  const fullText = $("text")?.value.trim() || "";
+async def generate_audio(data: TTSRequest):
+    text = data.text.strip()
 
-  if (!fullText) {
-    setStatus("⚠️ पहले Script लिखें।", "error");
-    return;
-  }
+    if not text:
+        raise HTTPException(
+            status_code=400,
+            detail="कृपया पहले स्क्रिप्ट लिखें।"
+        )
 
-  const previewText = fullText
-    .split(/[।!?]/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .join("।");
+    engine = data.engine.strip().lower()
 
-  await requestPreview(
-    previewText || fullText.slice(0, 350),
-    "quick"
-  );
-});
+    if engine == "edge":
+        return await make_edge_audio(data)
+
+    if engine == "azure":
+        return await asyncio.to_thread(
+            make_azure_audio,
+            data
+        )
+
+    raise HTTPException(
+        status_code=400,
+        detail="अमान्य Voice Engine चुना गया है।"
+    )
 
 
-/* =========================================================
-   FULL GENERATION
-========================================================= */
+# -------------------------------
+# Audio -> Base64 JSON
+# -------------------------------
 
-$("generate")?.addEventListener("click", generateVoice);
+async def audio_response(
+    data: TTSRequest,
+    preview=False
+):
+    if preview:
+        data.text = data.text[:350]
 
-async function generateVoice() {
-  if (isGenerating) return;
+    temp_path = await generate_audio(data)
 
-  const text = $("text")?.value.trim() || "";
+    try:
+        with open(temp_path, "rb") as audio_file:
+            audio_bytes = audio_file.read()
 
-  if (!text) {
-    setStatus("⚠️ पहले Script लिखें।", "error");
-    return;
-  }
+        if not audio_bytes:
+            raise HTTPException(
+                status_code=502,
+                detail="ऑडियो फ़ाइल खाली है।"
+            )
 
-  if (text.length > 12000) {
-    setStatus(
-      "⚠️ Script 12000 characters से ज्यादा है।",
-      "error"
-    );
-    return;
-  }
+        encoded_audio = base64.b64encode(
+            audio_bytes
+        ).decode("ascii")
 
-  if (!canUseCharacters(text.length)) {
-    setStatus(
-      "⚠️ App monthly usage limit पूरी हो गई है।",
-      "error"
-    );
-    return;
-  }
+        return JSONResponse(
+            content={
+                "success": True,
+                "audio_base64": encoded_audio,
+                "mime_type": "audio/mpeg",
+                "filename": "voice.mp3"
+            }
+        )
 
-  isGenerating = true;
+    finally:
+        try:
+            os.remove(temp_path)
+        except OSError:
+            pass
 
-  const button = $("generate");
 
-  if (button) button.disabled = true;
+# -------------------------------
+# Main Generate Endpoint
+# -------------------------------
 
-  setStatus(
-    "⏳ Professional Voice बनाई जा रही है...",
-    "loading"
-  );
+@app.post("/api/tts")
+async def generate_tts(data: TTSRequest):
+    return await audio_response(data)
 
-  try {
-    const response = await fetch("/api/tts", {
-      method: "POST",
 
-      headers: {
-        "Content-Type": "application/json"
-      },
+# -------------------------------
+# Preview Endpoint
+# -------------------------------
 
-      body: JSON.stringify(getRequestPayload(text))
-  
+@app.post("/api/preview")
+async def preview_tts(data: TTSRequest):
+    return await audio_response(
+        data,
+        preview=True
+    )
