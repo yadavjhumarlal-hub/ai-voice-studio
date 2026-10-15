@@ -741,26 +741,47 @@ function base64ToBlobUrl(base64, mime = "audio/mpeg") {
 }
 
 async function readResponse(response) {
-  let data;
+    const contentType = (
+        response.headers.get("content-type") || ""
+    ).toLowerCase();
 
-  try {
-    data = await response.json();
-  } catch (_) {
-    throw new Error("सर्वर से सही Response नहीं मिला।");
-  }
+    // MP3 ऑडियो को JSON की तरह पढ़ने से रोकें
+    if (
+        response.ok &&
+        (
+            contentType.includes("audio/") ||
+            contentType.includes("application/octet-stream")
+        )
+    ) {
+        return null;
+    }
 
-  if (!response.ok) {
-    throw new Error(
-      data.detail || "Voice generation असफल हुई।"
-    );
-  }
+    let data = {};
 
-  if (!data.audio_base64) {
-    throw new Error("सर्वर से Audio प्राप्त नहीं हुआ।");
-  }
+    try {
+        data = await response.json();
+    } catch (error) {
+        if (!response.ok) {
+            throw new Error(
+                `Server error: HTTP ${response.status}`
+            );
+        }
 
-  return data;
-}
+        throw new Error(
+            "सर्वर से सही JSON उत्तर नहीं मिला।"
+        );
+    }
+
+    if (!response.ok) {
+        throw new Error(
+            data.detail ||
+            data.message ||
+            `HTTP ${response.status}`
+        );
+    }
+
+    return data;
+         }
 
 function getRequestPayload(text) {
   return {
