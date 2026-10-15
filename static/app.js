@@ -1,551 +1,881 @@
-import os
-import asyncio
-import tempfile
-import base64
-from pathlib import Path
+"use strict";
 
-import requests
-import edge_tts
+/* =====================================================
+   AI VOICE STUDIO PRO V3.3
+   Azure Speech + Edge TTS
+   Audio JSON/Base64 Compatible Frontend
+===================================================== */
 
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
+const $ = (id) => document.getElementById(id);
+
+const DEFAULT_ENGINE = "edge";
+const USAGE_LIMIT = 450000;
+
+const STORAGE_SETTINGS = "ai_voice_v3_settings";
+const STORAGE_USAGE = "ai_voice_v3_usage";
+const STORAGE_HISTORY = "ai_voice_v3_history";
+
+let config = {};
+let azureVoices = {};
+let edgeVoices = {};
+let currentAudioUrl = null;
+let isGenerating = false;
+
+let savedSettings = {
+    engine: DEFAULT_ENGINE,
+    voice: "arjun",
+    preset: "custom",
+    rate: 0,
+    pitch: 0,
+    volume: 0,
+    auto_director: true,
+    auto_emotion: true,
+    auto_pause: true,
+    pronunciation: true
+};
 
 
-# ==================================================
-# AI VOICE STUDIO PRO V3.2
-# Azure Speech + Edge TTS
-# ==================================================
+/* =====================================================
+   GENERAL HELPERS
+===================================================== */
 
-app = FastAPI(title="AI Voice Studio PRO V3")
+function setText(id, value) {
+    const element = $(id);
+    if (element) element.textContent = value;
+}
 
-BASE_DIR = Path(__file__).resolve().parent
-STATIC_DIR = BASE_DIR / "static"
+function setValue(id, value) {
+    const element = $(id);
+    if (element) element.value = value;
+}
 
-if STATIC_DIR.exists():
-    app.mount(
-        "/static",
-        StaticFiles(directory=str(STATIC_DIR)),
-        name="static"
-    )
+function showElement(id) {
+    const element = $(id);
+    if (element) element.classList.remove("hidden");
+}
 
+function hideElement(id) {
+    const element = $(id);
+    if (element) element.classList.add("hidden");
+}
 
-# -------------------------------
-# Azure Voices
-# -------------------------------
+function getValue(id, fallback = "") {
+    const element = $(id);
+    return element ? element.value : fallback;
+}
 
-AZURE_VOICES = {
-    "arjun": {
-        "name": "hi-IN-MadhurNeural",
-        "label": "Madhur — Male"
-    },
-    "swara": {
-        "name": "hi-IN-SwaraNeural",
-        "label": "Swara — Female"
+function getChecked(id, fallback = false) {
+    const element = $(id);
+    return element ? element.checked : fallback;
+}
+
+function showMessage(message, type = "info") {
+    console.log(`[${type.toUpperCase()}] ${message}`);
+
+    let box = $("app_message");
+
+    if (!box) {
+        box = document.createElement("div");
+        box.id = "app_message";
+
+        box.style.position = "fixed";
+        box.style.left = "12px";
+        box.style.right = "12px";
+        box.style.bottom = "20px";
+        box.style.zIndex = "99999";
+        box.style.padding = "14px";
+        box.style.borderRadius = "10px";
+        box.style.background = "#222";
+        box.style.color = "#fff";
+        box.style.fontSize = "14px";
+        box.style.boxShadow = "0 4px 18px #0003";
+
+        document.body.appendChild(box);
+    }
+
+    box.textContent = message;
+    box.dataset.type = type;
+    box.style.display = "block";
+
+    clearTimeout(box._hideTimer);
+
+    box._hideTimer = setTimeout(() => {
+        box.style.display = "none";
+    }, 7000);
+}
+
+function setBusy(busy, buttonId) {
+    isGenerating = busy;
+
+    const ids = [
+        "generate",
+        "generate_btn",
+        "professional_generate",
+        "quick_preview",
+        "preview",
+        "selected_voice_preview"
+    ];
+
+    ids.forEach((id) => {
+        const button = $(id);
+        if (button) button.disabled = busy;
+    });
+
+    if (buttonId && $(buttonId)) {
+        $(buttonId).disabled = busy;
+    }
+
+    if (busy) {
+        setText("generate_status", "ऑडियो बनाया जा रहा है...");
+    } else {
+        setText("generate_status", "");
     }
 }
 
 
-# -------------------------------
-# Edge Voices
-# -------------------------------
+/* =====================================================
+   SETTINGS STORAGE
+===================================================== */
 
-EDGE_VOICES = {}
-EDGE_VOICE_LIST = []
+function loadSettings() {
+    try {
+        const raw = localStorage.getItem(STORAGE_SETTINGS);
+
+        if (raw) {
+            const parsed = JSON.parse(raw);
+
+            savedSettings = {
+                ...savedSettings,
+                ...parsed
+            };
+        }
+    } catch (error) {
+        console.error("Settings load error:", error);
+    }
+}
+
+function saveSettings() {
+    try {
+        localStorage.setItem(
+            STORAGE_SETTINGS,
+            JSON.stringify(savedSettings)
+        );
+    } catch (error) {
+        console.error("Settings save error:", error);
+    }
+}
+
+function syncSettingsFromUI() {
+    savedSettings.engine = getValue(
+        "engine",
+        savedSettings.engine
+    );
+
+    savedSettings.voice = getValue(
+        "voice",
+        savedSettings.voice
+    );
+
+    savedSettings.preset = getValue(
+        "preset",
+        savedSettings.preset
+    );
+
+    savedSettings.rate = Number(
+        getValue("rate", savedSettings.rate)
+    );
+
+    savedSettings.pitch = Number(
+        getValue("pitch", savedSettings.pitch)
+    );
+
+    savedSettings.volume = Number(
+        getValue("volume", savedSettings.volume)
+    );
+
+    savedSettings.auto_director = getChecked(
+        "auto_director",
+        savedSettings.auto_director
+    );
+
+    savedSettings.auto_emotion = getChecked(
+        "auto_emotion",
+        savedSettings.auto_emotion
+    );
+
+    savedSettings.auto_pause = getChecked(
+        "auto_pause",
+        savedSettings.auto_pause
+    );
+
+    savedSettings.pronunciation = getChecked(
+        "pronunciation",
+        savedSettings.pronunciation
+    );
+
+    saveSettings();
+}
 
 
-# -------------------------------
-# Request Model
-# -------------------------------
+/* =====================================================
+   USAGE COUNTER
+   Note: This is only a local browser counter.
+   It is not the actual Azure quota.
+===================================================== */
 
-class TTSRequest(BaseModel):
-    text: str = Field(..., min_length=1, max_length=12000)
-    engine: str = "edge"
-    voice: str = "arjun"
-    style: str = "neutral"
-    preset: str = "custom"
+function getUsage() {
+    try {
+        const raw = localStorage.getItem(STORAGE_USAGE);
 
-    rate: int = 0
-    pitch: int = 0
-    volume: int = 0
+        if (!raw) {
+            return {
+                date: new Date().toDateString(),
+                characters: 0
+            };
+        }
 
-    auto_director: bool = True
-    auto_emotion: bool = True
-    auto_pause: bool = True
-    pronunciation: bool = True
+        const data = JSON.parse(raw);
+
+        if (data.date !== new Date().toDateString()) {
+            return {
+                date: new Date().toDateString(),
+                characters: 0
+            };
+        }
+
+        return data;
+    } catch {
+        return {
+            date: new Date().toDateString(),
+            characters: 0
+        };
+    }
+}
+
+function loadUsage() {
+    updateUsageDisplay();
+}
+
+function updateUsageDisplay() {
+    const usage = getUsage();
+
+    const used = usage.characters || 0;
+    const remaining = Math.max(0, USAGE_LIMIT - used);
+
+    setText(
+        "usage_count",
+        `${used.toLocaleString()} / ${USAGE_LIMIT.toLocaleString()}`
+    );
+
+    setText(
+        "usage_value",
+        `${used.toLocaleString()} / ${USAGE_LIMIT.toLocaleString()}`
+    );
+
+    setText(
+        "usage_remaining",
+        remaining.toLocaleString()
+    );
+
+    const percent = Math.min(
+        100,
+        (used / USAGE_LIMIT) * 100
+    );
+
+    const progress = $("usage_progress");
+
+    if (progress) {
+        progress.style.width = `${percent}%`;
+    }
+}
+
+function canGenerate(text) {
+    const usage = getUsage();
+    const length = text.length;
+
+    if (usage.characters + length > USAGE_LIMIT) {
+        showMessage(
+            "इस ब्राउज़र के स्थानीय usage counter की सीमा पूरी हो गई है।",
+            "error"
+        );
+
+        return false;
+    }
+
+    return true;
+}
+
+function addUsage(text) {
+    const usage = getUsage();
+
+    usage.characters += text.length;
+    usage.date = new Date().toDateString();
+
+    try {
+        localStorage.setItem(
+            STORAGE_USAGE,
+            JSON.stringify(usage)
+        );
+    } catch (error) {
+        console.error("Usage save error:", error);
+    }
+
+    updateUsageDisplay();
+}
 
 
-# -------------------------------
-# Helpers
-# -------------------------------
+/* =====================================================
+   CONFIGURATION
+===================================================== */
 
-def clamp(value, minimum, maximum):
-    return max(minimum, min(maximum, int(value)))
+async function fetchJSON(url, options = {}) {
+    const response = await fetch(url, options);
 
+    const contentType = (
+        response.headers.get("content-type") || ""
+    ).toLowerCase();
 
-def error_response(message, status_code=500):
-    raise HTTPException(
-        status_code=status_code,
-        detail=message
-    )
+    if (!contentType.includes("application/json")) {
+        const body = await response.text();
 
+        throw new Error(
+            `सर्वर ने JSON के बजाय ${contentType || "अनजान डेटा"} भेजा। ` +
+            `HTTP ${response.status}. ` +
+            body.slice(0, 180)
+        );
+    }
 
-# -------------------------------
-# Load Edge Hindi Voices
-# -------------------------------
+    let data;
 
-async def refresh_edge_voices():
-    global EDGE_VOICES
-    global EDGE_VOICE_LIST
+    try {
+        data = await response.json();
+    } catch {
+        throw new Error(
+            "सर्वर का JSON उत्तर पढ़ा नहीं जा सका।"
+        );
+    }
 
-    try:
-        voices = await edge_tts.list_voices()
+    if (!response.ok) {
+        throw new Error(
+            data.detail ||
+            data.message ||
+            `HTTP ${response.status}`
+        );
+    }
 
-        hindi_voices = [
-            voice
-            for voice in voices
-            if voice.get("Locale") == "hi-IN"
+    return data;
+}
+
+function normalizeVoices(rawVoices) {
+    const result = {};
+
+    if (!rawVoices || typeof rawVoices !== "object") {
+        return result;
+    }
+
+    for (const [key, value] of Object.entries(rawVoices)) {
+        if (typeof value === "string") {
+            result[key] = {
+                name: value,
+                label: key
+            };
+        } else if (value && typeof value === "object") {
+            result[key] = {
+                name: value.name || key,
+                label: value.label || key
+            };
+        }
+    }
+
+    return result;
+}
+
+function populateVoiceDropdown(preferredVoice) {
+    const voiceSelect = $("voice");
+
+    if (!voiceSelect) return;
+
+    const engine = getValue("engine", DEFAULT_ENGINE);
+
+    const voices = engine === "azure"
+        ? azureVoices
+        : edgeVoices;
+
+    voiceSelect.innerHTML = "";
+
+    const entries = Object.entries(voices);
+
+    if (entries.length === 0) {
+        const option = document.createElement("option");
+
+        option.value = "";
+        option.textContent = "कोई आवाज़ उपलब्ध नहीं";
+
+        voiceSelect.appendChild(option);
+
+        showMessage(
+            `${engine === "edge" ? "Edge" : "Azure"} की आवाज़ों की सूची खाली है।`,
+            "error"
+        );
+
+        return;
+    }
+
+    for (const [key, voice] of entries) {
+        const option = document.createElement("option");
+
+        option.value = key;
+        option.textContent = voice.label || key;
+
+        voiceSelect.appendChild(option);
+    }
+
+    if (
+        preferredVoice &&
+        voices[preferredVoice]
+    ) {
+        voiceSelect.value = preferredVoice;
+    } else {
+        voiceSelect.selectedIndex = 0;
+    }
+
+    savedSettings.voice = voiceSelect.value;
+    saveSettings();
+}
+
+async function loadConfig() {
+    try {
+        config = await fetchJSON(
+            "/api/config?version=pro-v3"
+        );
+
+        azureVoices = normalizeVoices(config.voices);
+        edgeVoices = normalizeVoices(config.edge_voices);
+
+        const engineSelect = $("engine");
+
+        if (engineSelect) {
+            engineSelect.value =
+                savedSettings.engine || DEFAULT_ENGINE;
+        }
+
+        const engine = getValue("engine", DEFAULT_ENGINE);
+
+        const availableVoices = engine === "azure"
+            ? azureVoices
+            : edgeVoices;
+
+        const preferredVoice = availableVoices[
+            savedSettings.voice
         ]
+            ? savedSettings.voice
+            : "";
 
-        new_voices = {}
+        populateVoiceDropdown(preferredVoice);
 
-        for voice in hindi_voices:
-            voice_id = voice.get("ShortName")
+        applySavedSettingsToControls();
 
-            if not voice_id:
-                continue
+        showMessage(
+            `कॉन्फ़िगरेशन लोड हो गया। Engine: ${engine}`,
+            "success"
+        );
 
-            gender = voice.get("Gender", "")
-            label = voice_id.replace("hi-IN-", "")
+    } catch (error) {
+        console.error("Config error:", error);
 
-            if gender:
-                label += f" — {gender}"
-
-            new_voices[voice_id] = {
-                "name": voice_id,
-                "label": label
-            }
-
-        EDGE_VOICES = new_voices
-        EDGE_VOICE_LIST = list(new_voices.keys())
-
-        print(
-            "EDGE VOICES LOADED:",
-            len(EDGE_VOICE_LIST)
-        )
-
-    except Exception as exc:
-        print(
-            "EDGE VOICE LIST ERROR:",
-            repr(exc)
-        )
+        showMessage(
+            "कॉन्फ़िगरेशन लोड नहीं हुआ: " + error.message,
+            "error"
+        );
+    }
+}
 
 
-@app.on_event("startup")
-async def startup_event():
-    await refresh_edge_voices()
+/* =====================================================
+   ENGINE SELECTION
+===================================================== */
+
+function changeEngine() {
+    const engine = getValue("engine", DEFAULT_ENGINE);
+
+    savedSettings.engine = engine;
+
+    const voices = engine === "azure"
+        ? azureVoices
+        : edgeVoices;
+
+    const preferredVoice = voices[savedSettings.voice]
+        ? savedSettings.voice
+        : "";
+
+    populateVoiceDropdown(preferredVoice);
+
+    saveSettings();
+
+    showMessage(
+        `${engine === "edge" ? "Edge TTS" : "Azure Speech"} चुना गया।`,
+        "success"
+    );
+}
 
 
-# -------------------------------
-# Home Page
-# -------------------------------
+/* =====================================================
+   SETTINGS CONTROLS
+===================================================== */
 
-@app.get("/")
-async def home():
-    index_file = STATIC_DIR / "index.html"
+function applySavedSettingsToControls() {
+    const settings = [
+        ["preset", savedSettings.preset],
+        ["rate", savedSettings.rate],
+        ["pitch", savedSettings.pitch],
+        ["volume", savedSettings.volume],
+        ["auto_director", savedSettings.auto_director],
+        ["auto_emotion", savedSettings.auto_emotion],
+        ["auto_pause", savedSettings.auto_pause],
+        ["pronunciation", savedSettings.pronunciation]
+    ];
 
-    if not index_file.exists():
-        raise HTTPException(
-            status_code=500,
-            detail="static/index.html नहीं मिली।"
-        )
+    for (const [id, value] of settings) {
+        const element = $(id);
 
-    return FileResponse(str(index_file))
+        if (!element) continue;
+
+        if (element.type === "checkbox") {
+            element.checked = Boolean(value);
+        } else {
+            element.value = value;
+        }
+    }
+
+    updateControls();
+}
+
+function updateControls() {
+    const rate = Number(getValue("rate", 0));
+    const pitch = Number(getValue("pitch", 0));
+    const volume = Number(getValue("volume", 0));
+
+    setText("rate_value", `${rate}%`);
+    setText("pitch_value", `${pitch}`);
+    setText("volume_value", `${volume}%`);
+
+    setText("setting_rate_value", `${rate}%`);
+    setText("setting_pitch_value", `${pitch}`);
+    setText("setting_volume_value", `${volume}%`);
+}
 
 
-# -------------------------------
-# Health Check
-# -------------------------------
+/* =====================================================
+   REQUEST PAYLOAD
+===================================================== */
 
-@app.get("/health")
-async def health():
+function getScriptText() {
+    const candidates = [
+        "script",
+        "script_text",
+        "text",
+        "scriptInput"
+    ];
+
+    for (const id of candidates) {
+        const element = $(id);
+
+        if (element && typeof element.value === "string") {
+            return element.value.trim();
+        }
+    }
+
+    return "";
+}
+
+function getRequestPayload(text) {
+    syncSettingsFromUI();
+
     return {
-        "status": "ok",
-        "edge_voice_count": len(EDGE_VOICE_LIST)
+        text: text,
+
+        engine: getValue(
+            "engine",
+            savedSettings.engine || DEFAULT_ENGINE
+        ),
+
+        voice: getValue(
+            "voice",
+            savedSettings.voice || "arjun"
+        ),
+
+        style: getValue("style", "neutral"),
+
+        preset: getValue("preset", "custom"),
+
+        rate: Number(getValue("rate", 0)),
+        pitch: Number(getValue("pitch", 0)),
+        volume: Number(getValue("volume", 0)),
+
+        auto_director: getChecked("auto_director", true),
+        auto_emotion: getChecked("auto_emotion", true),
+        auto_pause: getChecked("auto_pause", true),
+        pronunciation: getChecked("pronunciation", true)
+    };
+}
+
+
+/* =====================================================
+   AUDIO RESPONSE DECODER
+
+   Supports:
+   1. JSON containing audio_base64
+   2. JSON containing audio/data base64
+   3. Direct MP3/audio responses
+
+   This is the main fix for the JSON/MP3 mismatch.
+===================================================== */
+
+function base64ToBlob(base64, mimeType = "audio/mpeg") {
+    const cleanBase64 = String(base64)
+        .replace(/^data:.*?;base64,/, "")
+        .replace(/\s/g, "");
+
+    const binary = atob(cleanBase64);
+
+    const chunks = [];
+    const chunkSize = 1024;
+
+    for (
+        let offset = 0;
+        offset < binary.length;
+        offset += chunkSize
+    ) {
+        const slice = binary.slice(
+            offset,
+            offset + chunkSize
+        );
+
+        const bytes = new Uint8Array(slice.length);
+
+        for (let i = 0; i < slice.length; i++) {
+            bytes[i] = slice.charCodeAt(i);
+        }
+
+        chunks.push(bytes);
     }
 
+    return new Blob(chunks, {
+        type: mimeType
+    });
+}
 
-# -------------------------------
-# Configuration API
-# -------------------------------
+async function readAudioResponse(response) {
+    const contentType = (
+        response.headers.get("content-type") || ""
+    ).toLowerCase();
 
-@app.get("/api/config")
-async def get_config():
-    if not EDGE_VOICES:
-        await refresh_edge_voices()
+    /*
+      If the server directly returns MP3,
+      do not call response.json().
+    */
 
-    return {
-        "version": "PRO V3.2",
+    if (
+        contentType.includes("audio/") ||
+        contentType.includes("application/octet-stream")
+    ) {
+        if (!response.ok) {
+            throw new Error(
+                `ऑडियो सर्वर त्रुटि: HTTP ${response.status}`
+            );
+        }
 
-        "engines": [
-            {
-                "id": "edge",
-                "label": "Edge TTS"
-            },
-            {
-                "id": "azure",
-                "label": "Azure Speech"
-            }
-        ],
-
-        "voices": AZURE_VOICES,
-        "edge_voices": EDGE_VOICES,
-
-        "styles": [
-            "neutral",
-            "serious",
-            "excited",
-            "happy",
-            "sad",
-            "soft"
-        ],
-
-        "presets": [
-            "custom",
-            "facts",
-            "motivation",
-            "news",
-            "story"
-        ]
+        return await response.blob();
     }
 
+    /*
+      Otherwise try to read the JSON response.
+    */
 
-# -------------------------------
-# Select Edge Voice
-# -------------------------------
+    const rawText = await response.text();
 
-def select_edge_voice(requested_voice):
-    if requested_voice in EDGE_VOICES:
-        return requested_voice
+    let data;
 
-    gender_preferences = {
-        "arjun": "Male",
-        "madhur": "Male",
-        "rehaan": "Male",
-        "aarav": "Male",
-        "kunal": "Male",
-        "swara": "Female",
-        "kavya": "Female",
-        "ananya": "Female",
-        "aarti": "Female"
+    try {
+        data = JSON.parse(rawText);
+    } catch {
+        throw new Error(
+            `सर्वर ने न JSON दिया, न पहचाना हुआ ऑडियो। ` +
+            `HTTP ${response.status}. ` +
+            `उत्तर: ${rawText.slice(0, 160)}`
+        );
     }
 
-    preferred_gender = gender_preferences.get(
-        requested_voice
-    )
+    if (!response.ok) {
+        throw new Error(
+            data.detail ||
+            data.message ||
+            `HTTP ${response.status}`
+        );
+    }
 
-    if preferred_gender:
-        for voice_id, voice_info in EDGE_VOICES.items():
-            if voice_info["label"].endswith(
-                "— " + preferred_gender
-            ):
-                return voice_id
+    if (data.success === false) {
+        throw new Error(
+            data.detail ||
+            data.message ||
+            "ऑडियो बनाना विफल रहा।"
+        );
+    }
 
-    if EDGE_VOICE_LIST:
-        return EDGE_VOICE_LIST[0]
+    /*
+      Format used by the updated main.py:
+      {
+        success: true,
+        audio_base64: "...",
+        mime_type: "audio/mpeg"
+      }
+    */
 
-    raise HTTPException(
-        status_code=503,
-        detail=(
-            "Edge TTS की हिंदी आवाज़ें उपलब्ध नहीं हैं। "
-            "कृपया कुछ देर बाद प्रयास करें।"
-        )
-    )
+    const encodedAudio =
+        data.audio_base64 ||
+        data.audio ||
+        data.audio_data ||
+        data.data;
 
+    if (typeof encodedAudio === "string") {
+        const mimeType =
+            data.mime_type ||
+            data.content_type ||
+            "audio/mpeg";
 
-# -------------------------------
-# Edge TTS Generation
-# -------------------------------
+        return base64ToBlob(
+            encodedAudio,
+            mimeType
+        );
+    }
 
-async def make_edge_audio(data: TTSRequest):
-    if not EDGE_VOICES:
-        await refresh_edge_voices()
+    /*
+      Support JSON data URLs as well.
+    */
 
-    voice_id = select_edge_voice(data.voice)
-    voice_name = EDGE_VOICES[voice_id]["name"]
+    if (
+        typeof data.audio_url === "string" &&
+        data.audio_url.startsWith("data:")
+    ) {
+        const parts = data.audio_url.split(",");
 
-    rate = clamp(data.rate, -30, 30)
-    pitch = clamp(data.pitch, -20, 20)
-    volume = clamp(data.volume, -20, 20)
+        if (parts.length === 2) {
+            const mimeMatch = parts[0].match(
+                /data:([^;]+)/
+            );
 
-    temp_file = tempfile.NamedTemporaryFile(
-        suffix=".mp3",
-        delete=False
-    )
+            return base64ToBlob(
+                parts[1],
+                mimeMatch ? mimeMatch[1] : "audio/mpeg"
+            );
+        }
+    }
 
-    temp_path = temp_file.name
-    temp_file.close()
-
-    try:
-        communicate = edge_tts.Communicate(
-            text=data.text.strip(),
-            voice=voice_name,
-            rate=f"{rate:+d}%",
-            pitch=f"{pitch * 5:+d}Hz",
-            volume=f"{volume:+d}%"
-        )
-
-        await communicate.save(temp_path)
-
-        if (
-            not os.path.exists(temp_path)
-            or os.path.getsize(temp_path) == 0
-        ):
-            raise RuntimeError(
-                "Edge TTS ने खाली ऑडियो फ़ाइल बनाई।"
-            )
-
-        return temp_path
-
-    except Exception as exc:
-        print(
-            "EDGE TTS GENERATION ERROR:",
-            repr(exc)
-        )
-
-        try:
-            os.remove(temp_path)
-        except OSError:
-            pass
-
-        raise HTTPException(
-            status_code=502,
-            detail=(
-                "Edge TTS आवाज़ नहीं बना सका। "
-                f"विवरण: {str(exc)[:300]}"
-            )
-        )
+    throw new Error(
+        "JSON मिला, लेकिन उसमें audio_base64 नहीं है। " +
+        "main.py और app.js के ऑडियो प्रारूप अलग हैं।"
+    );
+}
 
 
-# -------------------------------
-# Azure TTS Generation
-# -------------------------------
+/* =====================================================
+   AUDIO PLAYER
+===================================================== */
 
-def make_azure_audio(data: TTSRequest):
-    key = os.getenv(
-        "AZURE_SPEECH_KEY",
-        ""
-    ).strip()
+function getAudioElement(preview = false) {
+    if (preview) {
+        return $("preview_audio") || $("audio");
+    }
 
-    region = os.getenv(
-        "AZURE_SPEECH_REGION",
-        ""
-    ).strip()
+    return $("audio") ||
+        $("generated_audio") ||
+        $("preview_audio");
+}
 
-    if not key or not region:
-        raise HTTPException(
-            status_code=503,
-            detail=(
-                "Azure Speech सक्रिय नहीं है। "
-                "Edge TTS चुनकर कोशिश करें।"
-            )
-        )
+function clearPreviousAudio() {
+    if (currentAudioUrl) {
+        URL.revokeObjectURL(currentAudioUrl);
+        currentAudioUrl = null;
+    }
+}
 
-    voice_info = AZURE_VOICES.get(
-        data.voice,
-        AZURE_VOICES["arjun"]
-    )
+function playAudioBlob(blob, preview = false) {
+    if (!blob || blob.size === 0) {
+        throw new Error("ऑडियो फ़ाइल खाली है।");
+    }
 
-    voice_name = voice_info["name"]
+    clearPreviousAudio();
 
-    rate = clamp(data.rate, -30, 30)
-    pitch = clamp(data.pitch, -20, 20)
-    volume = clamp(data.volume, -20, 20)
+    currentAudioUrl = URL.createObjectURL(blob);
 
-    safe_text = (
-        data.text.strip()
-        .replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-    )
+    const audioElement = getAudioElement(preview);
 
-    pitch_text = f"{pitch:+d}%"
+    if (audioElement) {
+        audioElement.src = currentAudioUrl;
+        audioElement.classList.remove("hidden");
+        audioElement.load();
 
-    volume_text = (
-        "default"
-        if volume == 0
-        else f"{volume:+d}%"
-    )
+        if (!preview) {
+            audioElement.play().catch(() => {
+                // Mobile browsers may require a manual tap.
+            });
+        }
+    }
 
-    ssml = f"""
-    <speak version="1.0"
-        xmlns="http://www.w3.org/2001/10/synthesis"
-        xml:lang="hi-IN">
-        <voice name="{voice_name}">
-            <prosody
-                rate="{rate:+d}%"
-                pitch="{pitch_text}"
-                volume="{volume_text}">
-                {safe_text}
-            </prosody>
-        </voice>
-    </speak>
-    """
+    const downloadButton = $("download");
+    const downloadLink = $("download_link");
 
-    url = (
-        f"https://{region}.tts.speech.microsoft.com/"
-        "cognitiveservices/v1"
-    )
+    if (!preview) {
+        if (downloadButton) {
+            downloadButton.disabled = false;
 
-    try:
-        response = requests.post(
-            url,
-            headers={
-                "Ocp-Apim-Subscription-Key": key,
-                "Content-Type": "application/ssml+xml",
-                "X-Microsoft-OutputFormat":
-                    "audio-24khz-48kbitrate-mono-mp3"
-            },
-            data=ssml.encode("utf-8"),
-            timeout=45
-        )
+            downloadButton.onclick = () => {
+                const link = document.createElement("a");
 
-        if response.status_code != 200:
-            print(
-                "AZURE TTS ERROR:",
-                response.status_code,
-                response.text[:300]
-            )
+                link.href = currentAudioUrl;
+                link.download = "ai-voice-studio.mp3";
 
-            raise HTTPException(
-                status_code=502,
-                detail=(
-                    "Azure Speech अनुरोध विफल हुआ। "
-                    f"HTTP {response.status_code}"
-                )
-            )
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+            };
+        }
 
-        temp_file = tempfile.NamedTemporaryFile(
-            suffix=".mp3",
-            delete=False
-        )
+        if (downloadLink) {
+            downloadLink.href = currentAudioUrl;
+            downloadLink.download = "ai-voice-studio.mp3";
+            downloadLink.classList.remove("hidden");
+        }
+    }
 
-        temp_file.write(response.content)
-        temp_path = temp_file.name
-        temp_file.close()
-
-        if os.path.getsize(temp_path) == 0:
-            os.remove(temp_path)
-
-            raise HTTPException(
-                status_code=502,
-                detail="Azure ने खाली ऑडियो फ़ाइल दी।"
-            )
-
-        return temp_path
-
-    except requests.RequestException as exc:
-        print(
-            "AZURE CONNECTION ERROR:",
-            repr(exc)
-        )
-
-        raise HTTPException(
-            status_code=502,
-            detail="Azure Speech से कनेक्शन नहीं हो पाया।"
-        )
+    return currentAudioUrl;
+}
 
 
-# -------------------------------
-# Generate Audio
-# -------------------------------
+/* =====================================================
+   GENERATE / PREVIEW API
+===================================================== */
 
-async def generate_audio(data: TTSRequest):
-    text = data.text.strip()
+async function requestAudio(endpoint, text, preview = false) {
+    if (isGenerating) return;
 
-    if not text:
-        raise HTTPException(
-            status_code=400,
-            detail="कृपया पहले स्क्रिप्ट लिखें।"
-        )
+    if (!text || !text.trim()) {
+        showMessage(
+            "कृपया पहले स्क्रिप्ट लिखें।",
+            "error"
+        );
+        return;
+    }
 
-    engine = data.engine.strip().lower()
+    if (!canGenerate(text)) return;
 
-    if engine == "edge":
-        return await make_edge_audio(data)
+    setBusy(true);
 
-    if engine == "azure":
-        return await asyncio.to_thread(
-            make_azure_audio,
-            data
-        )
+    try {
+        const payload = getRequestPayload(text);
 
-    raise HTTPException(
-        status_code=400,
-        detail="अमान्य Voice Engine चुना गया है।"
-    )
+        const response = await fetch(endpoint, {
+            method: "POST",
 
-
-# -------------------------------
-# Audio -> Base64 JSON
-# -------------------------------
-
-async def audio_response(
-    data: TTSRequest,
-    preview=False
-):
-    if preview:
-        data.text = data.text[:350]
-
-    temp_path = await generate_audio(data)
-
-    try:
-        with open(temp_path, "rb") as audio_file:
-            audio_bytes = audio_file.read()
-
-        if not audio_bytes:
-            raise HTTPException(
-                status_code=502,
-                detail="ऑडियो फ़ाइल खाली है।"
-            )
-
-        encoded_audio = base64.b64encode(
-            audio_bytes
-        ).decode("ascii")
-
-        return JSONResponse(
-            content={
-                "success": True,
-                "audio_base64": encoded_audio,
-                "mime_type": "audio/mpeg",
-                "filename": "voice.mp3"
-            }
-        )
-
-    finally:
-        try:
-            os.remove(temp_path)
-        except OSError:
-            pass
-
-
-# -------------------------------
-# Main Generate Endpoint
-# -------------------------------
-
-@app.post("/api/tts")
-async def generate_tts(data: TTSRequest):
-    return await audio_response(data)
-
-
-# -------------------------------
-# Preview Endpoint
-# -------------------------------
-
-@app.post("/api/preview")
-async def preview_tts(data: TTSRequest):
-    return await audio_response(
-        data,
-        preview=True
-    )
+            headers: {
+                "Content
